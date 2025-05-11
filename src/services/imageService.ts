@@ -54,11 +54,11 @@ export const generateImage = async ({
 
     // Basic image generation request
     const requestBody: any = {
-      model: "gpt-4o",
+      model: "gpt-image-1",
       prompt: finalPrompt,
       n: 1,
       size: `${width}x${height}`,
-      quality: quality // "high", "medium", or "low" for GPT-4o
+      quality: quality // "high", "medium", or "low" for gpt-image-1
     };
 
     // Add response format for transparent images

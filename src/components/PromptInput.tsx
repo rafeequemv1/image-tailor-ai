@@ -12,7 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Image, Cube, Square } from "lucide-react";
+import { Image, Box, Square } from "lucide-react";
 
 interface PromptInputProps {
   prompt: string;
@@ -78,7 +78,7 @@ const PromptInput: React.FC<PromptInputProps> = ({
               </SelectItem>
               <SelectItem value="3d-biorender" className="flex items-center">
                 <div className="flex items-center gap-2">
-                  <Cube className="w-4 h-4" />
+                  <Box className="w-4 h-4" />
                   <span>3D: Biorender Style</span>
                 </div>
               </SelectItem>

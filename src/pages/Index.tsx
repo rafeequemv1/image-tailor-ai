@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ const Index = () => {
   const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
+  const [style, setStyle] = useState<string>("none");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("generate");
@@ -55,10 +57,19 @@ const Index = () => {
     setResult(null);
 
     try {
+      // Modify prompt based on selected style
+      let finalPrompt = prompt;
+      
+      if (style === "2d-biorender") {
+        finalPrompt = `${prompt} in 2D biorender style, scientific illustration, cell biology visualization`;
+      } else if (style === "3d-biorender") {
+        finalPrompt = `${prompt} in 3D biorender style, detailed 3D scientific model, molecular visualization`;
+      }
+
       const response = await generateImage({
         apiKey,
         images,
-        prompt,
+        prompt: finalPrompt,
         makeTransparent,
       });
 
@@ -117,6 +128,8 @@ const Index = () => {
                   setPrompt={setPrompt} 
                   makeTransparent={makeTransparent}
                   setMakeTransparent={setMakeTransparent}
+                  style={style}
+                  setStyle={setStyle}
                 />
                 <ImageUploader onImageUpload={handleImageUpload} />
               </CardContent>

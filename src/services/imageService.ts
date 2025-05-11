@@ -25,7 +25,7 @@ export const generateImage = async ({
   makeTransparent = false,
   images = [],
   maskImage = null,
-  quality = "standard",
+  quality = "high",
   size = "square"
 }: ImageGenerationParams): Promise<ImageGenerationResponse> => {
   try {
@@ -54,11 +54,11 @@ export const generateImage = async ({
 
     // Basic image generation request
     const requestBody: any = {
-      model: "dall-e-3",
+      model: "gpt-4o",
       prompt: finalPrompt,
       n: 1,
       size: `${width}x${height}`,
-      quality: quality // Will be either "standard" or "hd"
+      quality: quality // "high", "medium", or "low" for GPT-4o
     };
 
     // Add response format for transparent images
@@ -66,7 +66,7 @@ export const generateImage = async ({
       requestBody.response_format = "b64_json";
     }
     
-    // DALL-E API endpoint
+    // OpenAI API endpoint
     const endpoint = "https://api.openai.com/v1/images/generations";
 
     // Make the API request

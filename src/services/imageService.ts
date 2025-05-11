@@ -3,6 +3,7 @@ interface GenerateImageRequest {
   apiKey: string;
   images: File[];
   prompt: string;
+  makeTransparent?: boolean;
 }
 
 interface GenerateImageResponse {
@@ -18,6 +19,7 @@ export async function generateImage({
   apiKey,
   images,
   prompt,
+  makeTransparent = false,
 }: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
     if (!apiKey) {
@@ -42,7 +44,12 @@ export async function generateImage({
       formData.append("image[]", image);
     });
     
-    formData.append("prompt", prompt);
+    // If transparency is requested, add it to the prompt
+    const finalPrompt = makeTransparent 
+      ? `${prompt} with transparent background` 
+      : prompt;
+    
+    formData.append("prompt", finalPrompt);
     formData.append("n", "1");
     formData.append("size", "1024x1024");
 

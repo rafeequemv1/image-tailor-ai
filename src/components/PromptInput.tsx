@@ -1,32 +1,52 @@
 
 import React from "react";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface PromptInputProps {
   prompt: string;
   setPrompt: (prompt: string) => void;
+  makeTransparent: boolean;
+  setMakeTransparent: (make: boolean) => void;
 }
 
-const PromptInput: React.FC<PromptInputProps> = ({ prompt, setPrompt }) => {
+const PromptInput: React.FC<PromptInputProps> = ({ 
+  prompt, 
+  setPrompt,
+  makeTransparent,
+  setMakeTransparent
+}) => {
   return (
-    <div className="space-y-2">
-      <label
-        htmlFor="prompt"
-        className="block text-sm font-medium text-foreground"
-      >
-        Prompt
-      </label>
-      <div>
-        <Input
-          id="prompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe how to transform the image(s)..."
-          className="w-full"
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label
+          htmlFor="prompt"
+          className="block text-sm font-medium text-foreground"
+        >
+          Prompt
+        </label>
+        <div>
+          <Input
+            id="prompt"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Describe how to transform the image(s)..."
+            className="w-full"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Be specific about the changes you want to see
+          </p>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="transparency-mode"
+          checked={makeTransparent}
+          onCheckedChange={setMakeTransparent}
         />
-        <p className="mt-1 text-xs text-muted-foreground">
-          Be specific about the changes you want to see
-        </p>
+        <Label htmlFor="transparency-mode">Make background transparent</Label>
       </div>
     </div>
   );

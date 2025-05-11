@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,6 +7,7 @@ import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
 import { generateImage } from "@/services/imageService";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
 import { Beaker, FlaskConical } from "lucide-react";
@@ -14,8 +15,8 @@ import { Beaker, FlaskConical } from "lucide-react";
 const App = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  // Static API key for demo purposes
-  const apiKey = "demo-key";
+  // Updated API key with the provided key
+  const apiKey = "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";
   const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
   const [editPrompt, setEditPrompt] = useState<string>("");
@@ -24,13 +25,113 @@ const App = () => {
   const [quality, setQuality] = useState<string>("standard");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
   
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+      
+      setUser(session.user);
+    };
+    
+    checkUser();
+    
+    // Check if there's an edit request from the library
+    const editImageData = sessionStorage.getItem('editImage');
+    if (editImageData) {
+      try {
+        const { imageUrl, prompt } = JSON.parse(editImageData);
+        // Fetch the image as a File object
+        fetch(imageUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], "reference-image.png", { type: blob.type });
+            setImages([file]);
+            setPrompt(prompt || "");
+            // Clear the sessionStorage after processing
+            sessionStorage.removeItem('editImage');
+            
+            toast({
+              title: "Ready to edit",
+              description: "Your image has been loaded for editing",
+            });
+          });
+      } catch (error) {
+        console.error("Error processing edit image data:", error);
+      }
+    }
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        navigate("/login");
+      } else if (session) {
+        setUser(session.user);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   const handleImageUpload = (files: File[]) => {
     setImages(files);
   };
   
   const handleEditPromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditPrompt(e.target.value);
+  };
+
+  // Automatically save the generated image to the user's library
+  const saveImageToLibrary = async (imageUrl: string, promptText: string) => {
+    try {
+      // Get the current logged in user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to save icons to your library",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generate a title based on the prompt
+      const title = promptText.length > 30 
+        ? `${promptText.substring(0, 30)}...` 
+        : promptText || "Untitled Icon";
+
+      // Save the image data to Supabase
+      const { data, error } = await supabase
+        .from('user_images')
+        .insert({
+          user_id: user.id,
+          image_url: imageUrl,
+          prompt: promptText,
+          title: title,
+        })
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Icon saved to library",
+        description: "Your scientific icon has been automatically saved to your personal library",
+      });
+    } catch (error) {
+      console.error("Error saving icon:", error);
+      toast({
+        title: "Save failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred while saving",
+        variant: "destructive",
+      });
+    }
   };
 
   // New function to handle applying edits to the current image
@@ -85,6 +186,8 @@ const App = () => {
       // Update the prompt to reflect the edit prompt
       setPrompt(editPromptText);
       
+      // Auto-save the edited image
+      await saveImageToLibrary(imageUrl, editPromptText);
     } catch (error) {
       console.error(error);
       toast({
@@ -138,6 +241,8 @@ const App = () => {
         throw new Error("No icon data received");
       }
       
+      // Auto-save the generated image
+      await saveImageToLibrary(imageUrl, prompt);
     } catch (error) {
       console.error(error);
       toast({
@@ -149,6 +254,8 @@ const App = () => {
       setIsLoading(false);
     }
   };
+
+  if (!user) return null;
 
   return (
     <div className="flex flex-col">

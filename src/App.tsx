@@ -41,6 +41,31 @@ const App = () => {
     
     checkUser();
     
+    // Check if there's an edit request from the library
+    const editImageData = sessionStorage.getItem('editImage');
+    if (editImageData) {
+      try {
+        const { imageUrl, prompt } = JSON.parse(editImageData);
+        // Fetch the image as a File object
+        fetch(imageUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], "reference-image.png", { type: blob.type });
+            setImages([file]);
+            setPrompt(prompt || "");
+            // Clear the sessionStorage after processing
+            sessionStorage.removeItem('editImage');
+            
+            toast({
+              title: "Ready to edit",
+              description: "Your image has been loaded for editing",
+            });
+          });
+      } catch (error) {
+        console.error("Error processing edit image data:", error);
+      }
+    }
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         navigate("/login");

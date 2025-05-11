@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Home, User, LogOut } from "lucide-react";
+import { Home, User, LogOut, Gallery } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
@@ -53,6 +53,12 @@ const Navigation = () => {
             </Link>
           </Button>
           
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/library" title="Image Library">
+              <Gallery className="h-5 w-5" />
+            </Link>
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -69,6 +75,9 @@ const Navigation = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/app">Generate Images</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/library">Image Library</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/profile">Profile</Link>

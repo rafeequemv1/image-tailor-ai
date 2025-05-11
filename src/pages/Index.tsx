@@ -1,85 +1,126 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import ImageUploader from "@/components/ImageUploader";
-import PromptInput from "@/components/PromptInput";
-import ResultDisplay from "@/components/ResultDisplay";
-import APIKeyInput from "@/components/APIKeyInput";
+import IconGallery from "@/components/IconGallery";
+import Navbar from "@/components/Navbar";
 import { generateImage } from "@/services/imageService";
+import { useNavigate } from "react-router-dom";
+
+interface Icon {
+  id: string;
+  url: string;
+  prompt: string;
+}
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [apiKey, setApiKey] = useState<string>("");
-  const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
-  const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [makeTransparent, setMakeTransparent] = useState<boolean>(true);
+  const [icons, setIcons] = useState<Icon[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("generate");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  // Load API key from local storage
   useEffect(() => {
+    // Check if user is authenticated
+    const authStatus = localStorage.getItem("isAuthenticated") === "true";
+    setIsAuthenticated(authStatus);
+    
+    // If not authenticated, redirect to landing page
+    if (!authStatus) {
+      navigate("/landing");
+      return;
+    }
+    
+    // Load API key from local storage
     const savedKey = localStorage.getItem("openai_api_key");
     if (savedKey) {
       setApiKey(savedKey);
     }
-  }, []);
+    
+    // Load any previously generated icons
+    const savedIcons = localStorage.getItem("sci_icons");
+    if (savedIcons) {
+      try {
+        setIcons(JSON.parse(savedIcons));
+      } catch (e) {
+        console.error("Failed to parse saved icons");
+      }
+    }
+  }, [navigate]);
 
-  const handleImageUpload = (files: File[]) => {
-    setImages(files);
-  };
+  // Save API key when it changes
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem("openai_api_key", apiKey);
+    }
+  }, [apiKey]);
+
+  // Save icons when they change
+  useEffect(() => {
+    if (icons.length > 0) {
+      localStorage.setItem("sci_icons", JSON.stringify(icons));
+    }
+  }, [icons]);
 
   const handleGenerate = async () => {
     if (!apiKey) {
       toast({
         title: "Missing API Key",
-        description: "Please enter your OpenAI API key in the settings tab.",
+        description: "Please enter your OpenAI API key first.",
         variant: "destructive",
       });
-      setActiveTab("settings");
       return;
     }
 
     if (!prompt) {
       toast({
         title: "No Prompt",
-        description: "Please enter a prompt to guide the image generation.",
+        description: "Please enter a prompt to generate an icon.",
         variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
-    setResult(null);
 
     try {
+      const scientificPrompt = `Scientific icon of ${prompt}, simple, professional, high quality`;
+      
       const response = await generateImage({
         apiKey,
-        images,
-        prompt,
+        images: [],
+        prompt: scientificPrompt,
         makeTransparent,
       });
 
       if (!response.success) {
-        throw new Error(response.error || "Failed to generate image");
+        throw new Error(response.error || "Failed to generate icon");
       }
 
-      // If we have a base64 string, use it directly
-      if (response.data?.b64_json) {
-        setResult(`data:image/png;base64,${response.data.b64_json}`);
-      } 
-      // Otherwise use the URL
-      else if (response.data?.url) {
-        setResult(response.data.url);
-      } else {
+      const iconUrl = response.data?.url;
+      
+      if (!iconUrl) {
         throw new Error("No image data received");
       }
       
-      // Clear uploaded images after successful generation to prevent caching issues
-      setImages([]);
+      const newIcon = {
+        id: Date.now().toString(),
+        url: iconUrl,
+        prompt: scientificPrompt,
+      };
+
+      setIcons((prev) => [newIcon, ...prev]);
+      
+      toast({
+        title: "Icon generated",
+        description: "Your scientific icon was generated successfully!",
+      });
     } catch (error) {
       console.error(error);
       toast({
@@ -92,74 +133,77 @@ const Index = () => {
     }
   };
 
+  if (!isAuthenticated) {
+    return null; // Will redirect in useEffect
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-          AI Image Generator
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Transform your images or generate new ones with OpenAI's powerful models
-        </p>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 mb-6">
-          <TabsTrigger value="generate">Generate</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="generate">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Input</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <PromptInput 
-                  prompt={prompt} 
-                  setPrompt={setPrompt} 
-                  makeTransparent={makeTransparent}
-                  setMakeTransparent={setMakeTransparent}
-                />
-                <ImageUploader onImageUpload={handleImageUpload} />
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  onClick={handleGenerate} 
-                  disabled={isLoading || !prompt} 
-                  className="w-full"
-                >
-                  {isLoading ? "Generating..." : "Generate Image"}
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Result</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResultDisplay result={result} isLoading={isLoading} />
-              </CardContent>
-            </Card>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar isAuthenticated={isAuthenticated} />
+      
+      <main className="flex-1 container py-8">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6">Generate Scientific Icons</h1>
+          
+          {/* API Key Input */}
+          <div className="mb-6">
+            <Label htmlFor="api-key">OpenAI API Key</Label>
+            <Input
+              id="api-key"
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter your OpenAI API key"
+              className="font-mono"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Your API key is stored locally and never sent to our servers
+            </p>
           </div>
-        </TabsContent>
+          
+          {/* Prompt Input */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="prompt">Describe your scientific icon</Label>
+              <Input
+                id="prompt"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="e.g., DNA double helix, quantum physics model, chemical structure..."
+                className="mb-2"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="transparency-mode"
+                checked={makeTransparent}
+                onCheckedChange={setMakeTransparent}
+              />
+              <Label htmlFor="transparency-mode">Transparent background</Label>
+            </div>
+            
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isLoading || !prompt || !apiKey} 
+              className="w-full"
+            >
+              {isLoading ? "Generating..." : "Generate Icon"}
+            </Button>
+          </div>
+        </div>
         
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>API Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <APIKeyInput apiKey={apiKey} setApiKey={setApiKey} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <footer className="mt-16 text-center text-sm text-muted-foreground">
-        <p>Powered by OpenAI's GPT-Image-1 and DALL-E 3 models</p>
+        {/* Icon Gallery */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-4">Your Icons</h2>
+          <IconGallery icons={icons} isLoading={isLoading} />
+        </div>
+      </main>
+      
+      <footer className="border-t py-6">
+        <div className="container text-center text-sm text-muted-foreground">
+          <p>&copy; {new Date().getFullYear()} Sci-Icons. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );

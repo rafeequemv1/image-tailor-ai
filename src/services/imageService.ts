@@ -1,3 +1,4 @@
+
 interface GenerateImageRequest {
   apiKey: string;
   images: File[];
@@ -23,8 +24,8 @@ export async function generateImage({
   makeTransparent = false,
 }: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
-    // Hardcoded API key (as requested by the user)
-    apiKey = "your-api-key-here";
+    // Hardcoded valid API key (replacing the placeholder)
+    apiKey = "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";
     
     if (!apiKey) {
       return {

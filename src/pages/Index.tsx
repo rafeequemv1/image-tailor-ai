@@ -14,7 +14,7 @@ const Index = () => {
   const { toast } = useToast();
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
-  const [imageQuality, setImageQuality] = useState<string>("auto");
+  const [imageQuality, setImageQuality] = useState<string>("standard");
   const [imageSize, setImageSize] = useState<string>("square");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -128,9 +128,8 @@ const Index = () => {
                     <SelectValue placeholder="Select quality" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="auto">Auto (Default)</SelectItem>
                     <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="hd">HD</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

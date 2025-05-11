@@ -25,7 +25,7 @@ export const generateImage = async ({
   makeTransparent = false,
   images = [],
   maskImage = null,
-  quality = "high",
+  quality = "standard",
   size = "square"
 }: ImageGenerationParams): Promise<ImageGenerationResponse> => {
   try {
@@ -58,7 +58,7 @@ export const generateImage = async ({
       prompt: finalPrompt,
       n: 1,
       size: `${width}x${height}`,
-      quality: quality
+      quality: quality // Will be either "standard" or "hd"
     };
 
     // Add response format for transparent images

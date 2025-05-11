@@ -6,10 +6,11 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 
 const AppLayout = () => {
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="flex min-h-screen w-full">
       <SidebarDemo />
       <SidebarInset className="pt-0">
-        <div className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-white px-4 sm:px-6">
+        {/* Add the sidebar trigger in the header */}
+        <div className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
           <SidebarTrigger />
           <div className="flex-1" />
         </div>

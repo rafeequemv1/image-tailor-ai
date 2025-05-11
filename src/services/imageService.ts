@@ -39,18 +39,17 @@ export async function generateImage({
     // Determine which endpoint to use based on whether images were provided
     let endpoint = "https://api.openai.com/v1/images/generations"; // Default for text-to-image
     
+    // Always use the latest model: gpt-image-1
+    formData.append("model", "gpt-image-1");
+    
     if (images.length > 0) {
       // Switch to image edit endpoint when images are provided
       endpoint = "https://api.openai.com/v1/images/edits";
-      formData.append("model", "gpt-image-1");
       
       // Append each image
       images.forEach(image => {
         formData.append("image[]", image);
       });
-    } else {
-      // For text-to-image generation
-      formData.append("model", "dall-e-3");
     }
     
     formData.append("prompt", finalPrompt);

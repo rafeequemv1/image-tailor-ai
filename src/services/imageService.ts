@@ -6,6 +6,7 @@ interface ImageGenerationParams {
   maskImage?: File | null;
   quality?: string;
   size?: string;
+  style?: string;
 }
 
 interface ImageGenerationResponse {
@@ -26,13 +27,22 @@ export const generateImage = async ({
   images = [],
   maskImage = null,
   quality = "high",
-  size = "square"
+  size = "square",
+  style = ""
 }: ImageGenerationParams): Promise<ImageGenerationResponse> => {
   try {
     // Process prompt to add transparency request if needed
-    const finalPrompt = makeTransparent
-      ? `${prompt}. Please ensure the background is completely transparent.`
-      : prompt;
+    let finalPrompt = prompt;
+    
+    // Apply style if provided
+    if (style) {
+      finalPrompt = `${prompt}. Render in ${style} style.`;
+    }
+    
+    // Add transparency request if needed
+    if (makeTransparent) {
+      finalPrompt = `${finalPrompt}. Please ensure the background is completely transparent.`;
+    }
 
     // Configure size based on selection
     let width = 1024;
@@ -60,11 +70,6 @@ export const generateImage = async ({
       size: `${width}x${height}`,
       quality: quality // "high", "medium", or "low" for gpt-image-1
     };
-
-    // Add response format for transparent images
-    if (makeTransparent) {
-      requestBody.response_format = "b64_json";
-    }
     
     // OpenAI API endpoint
     const endpoint = "https://api.openai.com/v1/images/generations";

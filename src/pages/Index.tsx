@@ -1,15 +1,12 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Wand2 } from "lucide-react";
 import ResultDisplay from "@/components/ResultDisplay";
 import { generateImage } from "@/services/imageService";
+import PromptInput from "@/components/PromptInput";
 
 const Index = () => {
   const { toast } = useToast();
@@ -20,6 +17,7 @@ const Index = () => {
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [lastPrompt, setLastPrompt] = useState<string>("");
+  const [stylePreset, setStylePreset] = useState<string>("");
 
   const handleGenerate = async (updatePrompt?: string) => {
     const currentPrompt = updatePrompt || prompt;
@@ -52,6 +50,7 @@ const Index = () => {
         makeTransparent,
         quality: imageQuality,
         size: imageSize,
+        style: stylePreset
       });
 
       if (!response.success) {
@@ -106,18 +105,14 @@ const Index = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="overflow-hidden">
           <CardContent className="p-6 space-y-6">
-            <div>
-              <label htmlFor="prompt" className="block text-sm font-medium mb-2">
-                Image Description
-              </label>
-              <Textarea
-                id="prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the image you want to generate. Be specific about style, colors, subjects, and composition."
-                className="w-full h-32 resize-none"
-              />
-            </div>
+            <PromptInput
+              prompt={prompt}
+              setPrompt={setPrompt}
+              makeTransparent={makeTransparent}
+              setMakeTransparent={setMakeTransparent}
+              style={stylePreset}
+              setStyle={setStylePreset}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -153,21 +148,9 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="transparency-mode"
-                checked={makeTransparent}
-                onCheckedChange={setMakeTransparent}
-              />
-              <Label htmlFor="transparency-mode">Transparent Background</Label>
-            </div>
-
             <div>
               <p className="text-xs text-muted-foreground mb-2">
                 For best results, be detailed in your description including style, mood, lighting, and composition.
-                <br />
-                Examples: "A serene mountain landscape at sunset with pink and purple hues", "A futuristic
-                cyberpunk city with neon lights"
               </p>
               <p className="text-xs text-amber-500">
                 Note: The system will automatically retry if rate limits are encountered. If errors persist, please wait
@@ -183,10 +166,6 @@ const Index = () => {
               <Wand2 className="mr-2 h-4 w-4" />
               {isLoading ? "Generating..." : "Generate Image"}
             </Button>
-            
-            <p className="text-xs text-center text-muted-foreground">
-              Note: If generation fails due to rate limits, the system will automatically retry up to 3 times.
-            </p>
           </CardContent>
         </Card>
 

@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import ImageUploader from "@/components/ImageUploader";
 import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
@@ -21,9 +19,6 @@ const Index = () => {
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("generate");
-  const [mode, setMode] = useState<"generate" | "edit">("generate");
-  const [enableMasking, setEnableMasking] = useState<boolean>(false);
-  const [maskImage, setMaskImage] = useState<File | null>(null);
 
   // Load API key from local storage
   useEffect(() => {
@@ -35,14 +30,6 @@ const Index = () => {
 
   const handleImageUpload = (files: File[]) => {
     setImages(files);
-    // If user uploads an image, automatically switch to edit mode
-    if (files.length > 0 && mode === "generate") {
-      setMode("edit");
-    }
-  };
-  
-  const handleMaskChange = (mask: File | null) => {
-    setMaskImage(mask);
   };
 
   const handleGenerate = async () => {
@@ -65,26 +52,15 @@ const Index = () => {
       return;
     }
 
-    // For edit mode, make sure there's an image
-    if (mode === "edit" && images.length === 0) {
-      toast({
-        title: "No Image Selected",
-        description: "Please upload an image to edit.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     setResult(null);
 
     try {
       const response = await generateImage({
         apiKey,
-        images: mode === "edit" ? images : [],
+        images,
         prompt,
         makeTransparent,
-        maskImage: enableMasking ? maskImage : null,
       });
 
       if (!response.success) {
@@ -102,13 +78,8 @@ const Index = () => {
         throw new Error("No image data received");
       }
       
-      // Clear uploaded images and masks after successful generation
+      // Clear uploaded images after successful generation to prevent caching issues
       setImages([]);
-      setMaskImage(null);
-      
-      // Reset to generate mode after successful operation
-      setMode("generate");
-      setEnableMasking(false);
     } catch (error) {
       console.error(error);
       toast({
@@ -142,87 +113,24 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>{mode === "edit" ? "Edit Image" : "Generate Image"}</CardTitle>
+                <CardTitle>Input</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex gap-2 mb-4">
-                  <Button
-                    variant={mode === "generate" ? "default" : "outline"}
-                    onClick={() => {
-                      setMode("generate");
-                      setEnableMasking(false);
-                    }}
-                    className="flex-1"
-                  >
-                    Generate
-                  </Button>
-                  <Button
-                    variant={mode === "edit" ? "default" : "outline"}
-                    onClick={() => setMode("edit")}
-                    className="flex-1"
-                  >
-                    Edit Image
-                  </Button>
-                </div>
-                
                 <PromptInput 
                   prompt={prompt} 
                   setPrompt={setPrompt} 
                   makeTransparent={makeTransparent}
                   setMakeTransparent={setMakeTransparent}
-                  mode={mode}
                 />
-                
-                {mode === "edit" && (
-                  <div className="flex items-center space-x-2 pt-2 pb-2">
-                    <Switch
-                      id="masking-mode"
-                      checked={enableMasking}
-                      onCheckedChange={(checked) => {
-                        setEnableMasking(checked);
-                        if (!checked) setMaskImage(null);
-                      }}
-                    />
-                    <Label htmlFor="masking-mode">Enable selective editing (masking)</Label>
-                    
-                    {enableMasking && (
-                      <div className="ml-auto">
-                        <p className="text-xs text-muted-foreground">
-                          Use the brush to highlight areas to edit
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {mode === "edit" && (
-                  <div className="pt-2 pb-2">
-                    <p className="text-sm text-muted-foreground">
-                      {images.length === 0 ? 
-                        "Upload an image to edit. The prompt will guide how the image is modified." :
-                        enableMasking ? 
-                          "Highlight the areas you want to edit. Only highlighted areas will be modified." :
-                          "Your uploaded image will be edited based on the prompt."
-                      }
-                    </p>
-                  </div>
-                )}
-                
-                <ImageUploader 
-                  onImageUpload={handleImageUpload} 
-                  onMaskChange={handleMaskChange}
-                  currentImages={images} 
-                  mode={mode}
-                  enableMasking={enableMasking}
-                />
+                <ImageUploader onImageUpload={handleImageUpload} />
               </CardContent>
               <CardFooter>
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isLoading || !prompt || (mode === "edit" && images.length === 0)} 
+                  disabled={isLoading || !prompt} 
                   className="w-full"
                 >
-                  {isLoading ? "Processing..." : mode === "edit" ? "Edit Image" : "Generate Image"}
+                  {isLoading ? "Generating..." : "Generate Image"}
                 </Button>
               </CardFooter>
             </Card>

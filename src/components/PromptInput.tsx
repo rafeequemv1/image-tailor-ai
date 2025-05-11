@@ -9,15 +9,13 @@ interface PromptInputProps {
   setPrompt: (prompt: string) => void;
   makeTransparent: boolean;
   setMakeTransparent: (make: boolean) => void;
-  mode?: "generate" | "edit";
 }
 
 const PromptInput: React.FC<PromptInputProps> = ({ 
   prompt, 
   setPrompt,
   makeTransparent,
-  setMakeTransparent,
-  mode = "generate"
+  setMakeTransparent
 }) => {
   return (
     <div className="space-y-4">
@@ -33,18 +31,11 @@ const PromptInput: React.FC<PromptInputProps> = ({
             id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder={
-              mode === "edit" 
-                ? "Describe how to edit the uploaded image..." 
-                : "Describe what you want to generate..."
-            }
+            placeholder="Describe what you want to generate or how to transform uploaded images..."
             className="w-full"
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            {mode === "edit" 
-              ? "The prompt will guide how your image is transformed" 
-              : "Describe the image you want to generate in detail"
-            }
+            You can generate images with just a prompt, or transform uploaded images
           </p>
         </div>
       </div>

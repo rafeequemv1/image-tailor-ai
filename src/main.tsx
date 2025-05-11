@@ -10,13 +10,14 @@ import Index from './pages/Index.tsx';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import NotFound from './pages/NotFound.tsx';
+import Landing from './pages/Landing.tsx';
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <SidebarProvider>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         

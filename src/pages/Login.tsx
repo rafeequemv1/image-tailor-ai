@@ -3,10 +3,10 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
+import { LogIn } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -64,51 +64,74 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="container mx-auto flex-grow flex items-center justify-center py-12">
-        <Card className="mx-auto w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Login</CardTitle>
-            <CardDescription>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="flex flex-grow items-center justify-center w-full px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Login</h1>
+            <p className="mt-2 text-sm text-gray-600">
               Enter your email and password to sign in
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">Email</label>
+            </p>
+          </div>
+          
+          <form onSubmit={handleLogin} className="mt-8 space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
+                  required
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
+                  className="mt-1"
                 />
               </div>
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">Password</label>
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
+                  autoComplete="current-password"
+                  required
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  className="mt-1"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+            </div>
+
+            <div>
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full flex justify-center items-center gap-2"
+              >
+                <LogIn className="h-4 w-4" />
                 {loading ? "Logging in..." : "Login"}
               </Button>
-            </form>
-          </CardContent>
-          <CardFooter>
-            <div className="text-sm text-muted-foreground text-center w-full">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary hover:underline">Sign Up</Link>
             </div>
-          </CardFooter>
-        </Card>
+          </form>
+          
+          <div className="mt-4 text-center text-sm">
+            <span className="text-gray-500">
+              Don't have an account?{" "}
+              <Link to="/register" className="font-medium text-black hover:underline">
+                Sign Up
+              </Link>
+            </span>
+          </div>
+        </div>
       </div>
       <Footer />
     </div>

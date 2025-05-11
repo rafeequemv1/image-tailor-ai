@@ -1,25 +1,17 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Save, Share, Wand2 } from "lucide-react";
+import { Download, Save, Share } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Textarea } from "@/components/ui/textarea";
 
 interface ResultDisplayProps {
   result: string | null;
   isLoading: boolean;
-  onUpdateImage?: (updatePrompt: string) => void;
 }
 
-const ResultDisplay: React.FC<ResultDisplayProps> = ({ 
-  result, 
-  isLoading, 
-  onUpdateImage 
-}) => {
+const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
   const { toast } = useToast();
-  const [updatePrompt, setUpdatePrompt] = useState("");
-  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleDownload = () => {
     if (!result) return;
@@ -27,7 +19,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
     // Create a temporary link element
     const a = document.createElement("a");
     a.href = result;
-    a.download = `sci-icon-${Date.now()}.png`;
+    a.download = `ai-generated-image-${Date.now()}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -39,6 +31,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   };
 
   const handleSave = () => {
+    // This would typically save to a database or localStorage
     toast({
       title: "Image saved to library",
       description: "Your image has been saved to your library",
@@ -48,8 +41,8 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   const handleShare = () => {
     if (navigator.share && result) {
       navigator.share({
-        title: "My Scientific Icon",
-        text: "Check out this scientific icon I created with AI!",
+        title: "My AI Generated Image",
+        text: "Check out this image I created with AI!",
         url: result,
       })
       .then(() => {
@@ -76,21 +69,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
     }
   };
 
-  const handleUpdate = () => {
-    if (updatePrompt.trim() && onUpdateImage) {
-      setIsUpdating(true);
-      onUpdateImage(updatePrompt);
-      setUpdatePrompt("");
-    } else {
-      toast({
-        title: "Empty update prompt",
-        description: "Please enter a description of the changes you want to make.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (isLoading || isUpdating) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Generating image...</h3>
@@ -103,11 +82,10 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 
   if (!result) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 border border-dashed rounded-lg bg-muted/30 border-muted-foreground/25">
-        <div className="text-center p-6">
-          <h3 className="text-xl font-medium mb-2">Your generated image will appear here</h3>
+      <div className="flex items-center justify-center h-64 border border-dashed rounded-lg bg-muted/30 border-muted-foreground/25">
+        <div className="text-center">
           <p className="text-muted-foreground">
-            Enter a description of the image you want to create and click "Generate Image" to get started.
+            Your generated image will appear here
           </p>
         </div>
       </div>
@@ -116,48 +94,27 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Generated Image</h3>
-      <div className="w-full relative rounded-lg overflow-hidden border">
+      <h3 className="text-lg font-medium">Result</h3>
+      <div className="w-full relative rounded-lg overflow-hidden">
         <img
           src={result}
           alt="Generated result"
           className="w-full object-contain"
         />
       </div>
-      
-      <div className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" />
-            Download
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="mr-2 h-4 w-4" />
-            Save to Library
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share className="mr-2 h-4 w-4" />
-            Share
-          </Button>
-        </div>
-        
-        <div className="space-y-2 pt-4 border-t">
-          <h4 className="text-sm font-medium">Make changes to this image</h4>
-          <Textarea
-            value={updatePrompt}
-            onChange={(e) => setUpdatePrompt(e.target.value)}
-            placeholder="Describe the changes you want to make to this image..."
-            className="w-full resize-none"
-          />
-          <Button 
-            onClick={handleUpdate} 
-            disabled={!updatePrompt.trim()}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            <Wand2 className="mr-2 h-4 w-4" />
-            Update Image
-          </Button>
-        </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={handleDownload}>
+          <Download className="mr-2 h-4 w-4" />
+          Download
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleSave}>
+          <Save className="mr-2 h-4 w-4" />
+          Save to Library
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleShare}>
+          <Share className="mr-2 h-4 w-4" />
+          Share
+        </Button>
       </div>
     </div>
   );

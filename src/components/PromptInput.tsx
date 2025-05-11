@@ -35,7 +35,7 @@ const PromptInput: React.FC<PromptInputProps> = ({
             className="w-full"
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            You can generate images with just a prompt, or transform uploaded images
+            You can generate images with just a prompt, transform uploaded images, or use inpainting with a mask
           </p>
         </div>
       </div>

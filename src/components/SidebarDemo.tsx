@@ -1,8 +1,8 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, UserCog, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, UserCog, Settings, LogOut, Microscope, Flask, Beaker } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   Sidebar,
@@ -12,11 +12,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
   useSidebar
 } from "./ui/sidebar";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 
@@ -58,17 +55,17 @@ export function SidebarDemo() {
   
   const links = [
     {
-      label: "Dashboard",
+      label: "Generator",
       href: "/app",
       icon: (
-        <LayoutDashboard className="h-5 w-5" />
+        <Flask className="h-5 w-5" />
       ),
     },
     {
       label: "Library",
       href: "/library",
       icon: (
-        <Settings className="h-5 w-5" />
+        <Microscope className="h-5 w-5" />
       ),
     },
     {
@@ -100,7 +97,7 @@ export function SidebarDemo() {
           animate={{ opacity: 1 }}
           className="font-medium whitespace-pre text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"
         >
-          AI Image Generator
+          Sci-icons
         </motion.span>
       </Link>
     );

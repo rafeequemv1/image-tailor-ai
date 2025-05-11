@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
+import { Beaker, Flask } from "lucide-react";
 
 const App = () => {
   const { toast } = useToast();
@@ -93,7 +95,7 @@ const App = () => {
       if (!user) {
         toast({
           title: "Authentication required",
-          description: "Please log in to save images to your library",
+          description: "Please log in to save icons to your library",
           variant: "destructive",
         });
         return;
@@ -102,7 +104,7 @@ const App = () => {
       // Generate a title based on the prompt
       const title = promptText.length > 30 
         ? `${promptText.substring(0, 30)}...` 
-        : promptText || "Untitled Image";
+        : promptText || "Untitled Icon";
 
       // Save the image data to Supabase
       const { data, error } = await supabase
@@ -120,11 +122,11 @@ const App = () => {
       }
 
       toast({
-        title: "Image saved to library",
-        description: "Your image has been automatically saved to your personal library",
+        title: "Icon saved to library",
+        description: "Your scientific icon has been automatically saved to your personal library",
       });
     } catch (error) {
-      console.error("Error saving image:", error);
+      console.error("Error saving icon:", error);
       toast({
         title: "Save failed",
         description: error instanceof Error ? error.message : "An unknown error occurred while saving",
@@ -203,7 +205,7 @@ const App = () => {
     if (!prompt) {
       toast({
         title: "No Prompt",
-        description: "Please enter a prompt to guide the image generation.",
+        description: "Please enter a prompt to guide the scientific icon generation.",
         variant: "destructive",
       });
       return;
@@ -223,7 +225,7 @@ const App = () => {
       });
 
       if (!response.success) {
-        throw new Error(response.error || "Failed to generate image");
+        throw new Error(response.error || "Failed to generate icon");
       }
 
       // If we have a base64 string, use it directly
@@ -237,7 +239,7 @@ const App = () => {
         imageUrl = response.data.url;
         setResult(imageUrl);
       } else {
-        throw new Error("No image data received");
+        throw new Error("No icon data received");
       }
       
       // Auto-save the generated image
@@ -261,17 +263,20 @@ const App = () => {
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            AI Image Generator
+            Sci-icons Generator
           </h1>
           <p className="text-muted-foreground mt-2">
-            Transform your images or generate new ones with OpenAI's powerful models
+            Create stunning scientific icons and illustrations with our AI-powered generator
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Input</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Flask className="h-5 w-5" />
+                Input
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <PromptInput 
@@ -292,14 +297,17 @@ const App = () => {
                 disabled={isLoading || !prompt} 
                 className="w-full"
               >
-                {isLoading ? "Generating..." : "Generate Image"}
+                {isLoading ? "Generating..." : "Generate Scientific Icon"}
               </Button>
             </CardFooter>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Result</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Beaker className="h-5 w-5" />
+                Result
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <ResultDisplay 

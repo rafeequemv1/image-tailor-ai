@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Home, User, LogOut, Image } from "lucide-react";
+import { Home, User, LogOut, Microscope } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
@@ -42,7 +42,7 @@ const Navigation = () => {
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            AI Image Generator
+            Sci-icons
           </span>
         </Link>
 
@@ -54,8 +54,8 @@ const Navigation = () => {
           </Button>
           
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/library" title="Image Library">
-              <Image className="h-5 w-5" />
+            <Link to="/library" title="Icon Library">
+              <Microscope className="h-5 w-5" />
             </Link>
           </Button>
           
@@ -74,10 +74,10 @@ const Navigation = () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/app">Generate Images</Link>
+                <Link to="/app">Generate Scientific Icons</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/library">Image Library</Link>
+                <Link to="/library">Icon Library</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/profile">Profile</Link>

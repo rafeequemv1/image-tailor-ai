@@ -19,7 +19,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
     // Create a temporary link element
     const a = document.createElement("a");
     a.href = result;
-    a.download = `ai-generated-image-${Date.now()}.png`;
+    a.download = `sci-icon-${Date.now()}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -31,7 +31,6 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
   };
 
   const handleSave = () => {
-    // This would typically save to a database or localStorage
     toast({
       title: "Image saved to library",
       description: "Your image has been saved to your library",
@@ -41,8 +40,8 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
   const handleShare = () => {
     if (navigator.share && result) {
       navigator.share({
-        title: "My AI Generated Image",
-        text: "Check out this image I created with AI!",
+        title: "My Scientific Icon",
+        text: "Check out this scientific icon I created with AI!",
         url: result,
       })
       .then(() => {
@@ -82,10 +81,11 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
 
   if (!result) {
     return (
-      <div className="flex items-center justify-center h-64 border border-dashed rounded-lg bg-muted/30 border-muted-foreground/25">
-        <div className="text-center">
+      <div className="flex flex-col items-center justify-center h-96 border border-dashed rounded-lg bg-muted/30 border-muted-foreground/25">
+        <div className="text-center p-6">
+          <h3 className="text-xl font-medium mb-2">Your generated image will appear here</h3>
           <p className="text-muted-foreground">
-            Your generated image will appear here
+            Enter a description of the image you want to create, optionally upload reference images, and click "Generate Image" to get started.
           </p>
         </div>
       </div>
@@ -94,8 +94,8 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Result</h3>
-      <div className="w-full relative rounded-lg overflow-hidden">
+      <h3 className="text-lg font-medium">Generated Image</h3>
+      <div className="w-full relative rounded-lg overflow-hidden border">
         <img
           src={result}
           alt="Generated result"

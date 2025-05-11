@@ -6,7 +6,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Gallery, Download, Trash2, Edit } from "lucide-react";
+import { Image, Download, Trash2, Edit } from "lucide-react";
 import { 
   Pagination, 
   PaginationContent, 
@@ -189,7 +189,7 @@ const Library = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl flex-grow">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center gap-2">
-            <Gallery className="h-8 w-8 text-blue-600" />
+            <Image className="h-8 w-8 text-blue-600" />
             Your Image Library
           </h1>
           <p className="text-muted-foreground mt-2">
@@ -213,7 +213,7 @@ const Library = () => {
           </div>
         ) : images.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed rounded-lg bg-muted/30 border-muted-foreground/25">
-            <Gallery className="h-12 w-12 text-muted-foreground mb-4" />
+            <Image className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-medium mb-2">Your library is empty</h3>
             <p className="text-muted-foreground mb-6">
               Generate some images to see them here

@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Home, User, LogOut, Gallery } from "lucide-react";
+import { Home, User, LogOut, Image } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
@@ -55,7 +55,7 @@ const Navigation = () => {
           
           <Button variant="ghost" size="icon" asChild>
             <Link to="/library" title="Image Library">
-              <Gallery className="h-5 w-5" />
+              <Image className="h-5 w-5" />
             </Link>
           </Button>
           

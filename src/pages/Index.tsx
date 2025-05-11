@@ -19,7 +19,6 @@ interface Icon {
 const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [apiKey, setApiKey] = useState<string>("");
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(true);
   const [icons, setIcons] = useState<Icon[]>([]);
@@ -37,12 +36,6 @@ const Index = () => {
       return;
     }
     
-    // Load API key from local storage
-    const savedKey = localStorage.getItem("openai_api_key");
-    if (savedKey) {
-      setApiKey(savedKey);
-    }
-    
     // Load any previously generated icons
     const savedIcons = localStorage.getItem("sci_icons");
     if (savedIcons) {
@@ -54,13 +47,6 @@ const Index = () => {
     }
   }, [navigate]);
 
-  // Save API key when it changes
-  useEffect(() => {
-    if (apiKey) {
-      localStorage.setItem("openai_api_key", apiKey);
-    }
-  }, [apiKey]);
-
   // Save icons when they change
   useEffect(() => {
     if (icons.length > 0) {
@@ -69,15 +55,6 @@ const Index = () => {
   }, [icons]);
 
   const handleGenerate = async () => {
-    if (!apiKey) {
-      toast({
-        title: "Missing API Key",
-        description: "Please enter your OpenAI API key first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!prompt) {
       toast({
         title: "No Prompt",
@@ -93,7 +70,6 @@ const Index = () => {
       const scientificPrompt = `Scientific icon of ${prompt}, simple, professional, high quality`;
       
       const response = await generateImage({
-        apiKey,
         images: [],
         prompt: scientificPrompt,
         makeTransparent,
@@ -145,22 +121,6 @@ const Index = () => {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-6">Generate Scientific Icons</h1>
           
-          {/* API Key Input */}
-          <div className="mb-6">
-            <Label htmlFor="api-key">OpenAI API Key</Label>
-            <Input
-              id="api-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter your OpenAI API key"
-              className="font-mono"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Your API key is stored locally and never sent to our servers
-            </p>
-          </div>
-          
           {/* Prompt Input */}
           <div className="space-y-4">
             <div>
@@ -185,7 +145,7 @@ const Index = () => {
             
             <Button 
               onClick={handleGenerate} 
-              disabled={isLoading || !prompt || !apiKey} 
+              disabled={isLoading || !prompt} 
               className="w-full"
             >
               {isLoading ? "Generating..." : "Generate Icon"}

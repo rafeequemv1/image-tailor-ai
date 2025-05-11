@@ -1,6 +1,5 @@
 
 interface GenerateImageRequest {
-  apiKey: string;
   images: File[];
   prompt: string;
   makeTransparent?: boolean;
@@ -15,20 +14,15 @@ interface GenerateImageResponse {
   error?: string;
 }
 
+// Hardcoded API key
+const API_KEY = "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";
+
 export async function generateImage({
-  apiKey,
   images,
   prompt,
   makeTransparent = false,
 }: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
-    if (!apiKey) {
-      return {
-        success: false,
-        error: "No API key provided",
-      };
-    }
-
     // Enhance the prompt for scientific icons
     let finalPrompt = prompt;
     if (!finalPrompt.toLowerCase().includes("icon")) {
@@ -46,7 +40,7 @@ export async function generateImage({
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -54,7 +48,7 @@ export async function generateImage({
         prompt: finalPrompt,
         n: 1,
         size: "1024x1024",
-        quality: "hd",
+        quality: "high", // Using 'high' instead of 'hd' as per API requirements
       }),
     });
 

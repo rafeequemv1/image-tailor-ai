@@ -1,10 +1,11 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, PencilLine, Undo2, RotateCcw, Upload, Trash2, Move, Scale, Layers } from "lucide-react";
+import { Eraser, PencilLine, Undo2, RotateCcw, Upload, Trash2, Move, Scale, Layers, Type } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { fabric } from 'fabric';
+import { Input } from "@/components/ui/input";
 
 interface DrawingCanvasProps {
   onSave: (file: File) => void;
@@ -23,8 +24,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
   const [color, setColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(5);
-  const [tool, setTool] = useState<"select" | "pencil" | "eraser">("select");
+  const [tool, setTool] = useState<"select" | "pencil" | "eraser" | "text">("select");
   const [uploadedImages, setUploadedImages] = useState<fabric.Image[]>([]);
+  const [textInput, setTextInput] = useState("");
 
   // Initialize fabric canvas
   useEffect(() => {
@@ -67,18 +69,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   useEffect(() => {
     if (!fabricCanvas) return;
     
-    if (tool === "select") {
-      fabricCanvas.isDrawingMode = false;
-      // Make all objects selectable and movable
-      fabricCanvas.forEachObject(obj => {
-        obj.selectable = true;
-        obj.evented = true;
-      });
-    } else if (tool === "pencil") {
-      fabricCanvas.isDrawingMode = true;
+    fabricCanvas.isDrawingMode = tool === "pencil" || tool === "eraser";
+    
+    // Make all objects selectable and movable in select mode
+    fabricCanvas.forEachObject(obj => {
+      obj.selectable = tool === "select";
+      obj.evented = tool === "select";
+    });
+    
+    if (tool === "pencil") {
       fabricCanvas.freeDrawingBrush.color = color;
     } else if (tool === "eraser") {
-      fabricCanvas.isDrawingMode = true;
       fabricCanvas.freeDrawingBrush.color = "#FFFFFF"; // White color to act as eraser
     }
     
@@ -243,78 +244,93 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     setTool("eraser");
   };
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-row justify-between items-center mb-2">
-        <div className="flex space-x-2">
-          <Button 
-            variant={tool === "select" ? "default" : "outline"} 
-            size="sm" 
-            onClick={handleSelectTool}
-          >
-            <Move className="h-4 w-4 mr-1" /> Select/Move
-          </Button>
-          <Button 
-            variant={tool === "pencil" ? "default" : "outline"} 
-            size="sm" 
-            onClick={handlePencilTool}
-          >
-            <PencilLine className="h-4 w-4 mr-1" /> Draw
-          </Button>
-          <Button 
-            variant={tool === "eraser" ? "default" : "outline"} 
-            size="sm" 
-            onClick={handleEraserTool}
-          >
-            <Eraser className="h-4 w-4 mr-1" /> Erase
-          </Button>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleUndo}>
-            <Undo2 className="h-4 w-4 mr-1" /> Undo
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleClear}>
-            <RotateCcw className="h-4 w-4 mr-1" /> Clear
-          </Button>
-        </div>
-      </div>
+  const handleTextTool = () => {
+    setTool("text");
+  };
 
-      <div className="flex space-x-4 items-center">
-        <label htmlFor="brushSize" className="text-sm">Brush Size:</label>
-        <Slider
-          id="brushSize"
-          min={1}
-          max={30}
-          step={1}
-          value={[brushSize]}
-          onValueChange={(value) => setBrushSize(value[0])}
-          className="w-[100px]"
-        />
-        <span className="text-sm">{brushSize}px</span>
+  const addText = () => {
+    if (!fabricCanvas || !textInput.trim()) return;
+    
+    const text = new fabric.Text(textInput.trim(), {
+      left: fabricCanvas.width! / 2,
+      top: fabricCanvas.height! / 2,
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fill: color,
+      textAlign: 'center',
+      originX: 'center',
+      originY: 'center'
+    });
+    
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.renderAll();
+    
+    // Clear the text input
+    setTextInput("");
+    
+    toast({
+      title: "Text added",
+      description: "Text has been added to the canvas",
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-1">
+        <Button 
+          variant={tool === "select" ? "default" : "outline"} 
+          size="icon" 
+          onClick={handleSelectTool}
+          className="h-8 w-8"
+        >
+          <Move className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant={tool === "pencil" ? "default" : "outline"} 
+          size="icon" 
+          onClick={handlePencilTool}
+          className="h-8 w-8"
+        >
+          <PencilLine className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant={tool === "eraser" ? "default" : "outline"} 
+          size="icon" 
+          onClick={handleEraserTool}
+          className="h-8 w-8"
+        >
+          <Eraser className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant={tool === "text" ? "default" : "outline"} 
+          size="icon" 
+          onClick={handleTextTool}
+          className="h-8 w-8"
+        >
+          <Type className="h-4 w-4" />
+        </Button>
+
+        <div className="h-8 border-l mx-1"></div>
         
-        {tool === "pencil" && (
-          <>
-            <label htmlFor="colorPicker" className="text-sm ml-4">Color:</label>
-            <input
-              type="color"
-              id="colorPicker"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="w-8 h-8 rounded-md cursor-pointer"
-            />
-          </>
-        )}
-      </div>
-      
-      <div className="flex space-x-2">
-        <Button variant="outline" size="sm" onClick={handleImageUpload} className="flex items-center">
-          <Upload className="h-4 w-4 mr-1" /> Add Image
+        <Button variant="outline" size="icon" onClick={handleUndo} className="h-8 w-8">
+          <Undo2 className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" onClick={handleClear} className="h-8 w-8">
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+        
+        <div className="h-8 border-l mx-1"></div>
+        
+        <Button variant="outline" size="icon" onClick={handleImageUpload} className="h-8 w-8">
+          <Upload className="h-4 w-4" />
         </Button>
         {uploadedImages.length > 0 && (
-          <Button variant="outline" size="sm" onClick={handleRemoveBackground} className="flex items-center">
-            <Trash2 className="h-4 w-4 mr-1" /> Remove Image
+          <Button variant="outline" size="icon" onClick={handleRemoveBackground} className="h-8 w-8">
+            <Trash2 className="h-4 w-4" />
           </Button>
         )}
+        
         <input 
           ref={fileInputRef}
           type="file"
@@ -323,10 +339,47 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           className="hidden"
           multiple
         />
-        <span className="text-xs text-muted-foreground ml-2 self-center">
-          {uploadedImages.length > 0 ? `${uploadedImages.length} image(s) added` : ''}
-        </span>
+        
+        <div className="h-8 border-l mx-1"></div>
+        
+        {(tool === "pencil" || tool === "text") && (
+          <input
+            type="color"
+            id="colorPicker"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="w-8 h-8 rounded-md cursor-pointer border-none p-0"
+          />
+        )}
+        
+        {tool === "pencil" && (
+          <div className="flex items-center ml-1 gap-1">
+            <Slider
+              id="brushSize"
+              min={1}
+              max={30}
+              step={1}
+              value={[brushSize]}
+              onValueChange={(value) => setBrushSize(value[0])}
+              className="w-20"
+            />
+            <span className="text-xs text-muted-foreground">{brushSize}px</span>
+          </div>
+        )}
       </div>
+      
+      {tool === "text" && (
+        <div className="flex gap-1 mt-1">
+          <Input
+            placeholder="Enter text to add"
+            value={textInput}
+            onChange={(e) => setTextInput(e.target.value)}
+            size={10}
+            className="h-8 text-sm"
+          />
+          <Button onClick={addText} size="sm" className="h-8">Add Text</Button>
+        </div>
+      )}
       
       <div className="border rounded-md overflow-hidden bg-white">
         <canvas
@@ -336,11 +389,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             height: "auto",
             touchAction: "none",
           }}
-          className={`cursor-${tool === "select" ? "move" : "crosshair"}`}
+          className={`cursor-${tool === "select" ? "move" : tool === "text" ? "text" : "crosshair"}`}
         />
       </div>
       
-      <Button onClick={handleSave} className="mt-2">
+      <Button onClick={handleSave} className="mt-1">
         Use Drawing as Reference
       </Button>
     </div>

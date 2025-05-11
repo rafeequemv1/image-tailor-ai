@@ -95,7 +95,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
           >
             <div className="flex flex-col items-center">
               <Pencil className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground text-center px-2">
+              <p className="text-sm text-muted-foreground text-center px-4 break-words">
                 Create a drawing to use as reference
               </p>
             </div>

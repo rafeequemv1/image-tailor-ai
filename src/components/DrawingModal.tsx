@@ -22,9 +22,9 @@ const DrawingModal: React.FC<DrawingModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Create a Drawing</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg">Create a Drawing</DialogTitle>
+          <DialogDescription className="text-xs">
             Draw an image to use as a reference for your AI generation
           </DialogDescription>
         </DialogHeader>

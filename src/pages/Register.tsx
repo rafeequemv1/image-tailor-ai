@@ -1,11 +1,10 @@
 
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
 
 const Register = () => {
@@ -13,18 +12,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/app");
-      }
-    };
-    checkSession();
-  }, [navigate]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,42 +28,14 @@ const Register = () => {
     
     setLoading(true);
 
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast({
-          title: "Registration Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
+    // Simulate registration process
+    setTimeout(() => {
       toast({
-        title: "Registration Successful",
-        description: "Your account has been created. You may need to verify your email before logging in.",
+        title: "Registration Demo",
+        description: "This is a demo registration page without actual authentication.",
       });
-      
-      // Auto login after registration if no email verification is required
-      if (data.session) {
-        navigate("/app");
-      } else {
-        navigate("/login");
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast({
-        title: "Registration Failed",
-        description: "An unknown error occurred.",
-        variant: "destructive",
-      });
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (

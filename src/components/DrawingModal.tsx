@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import DrawingCanvas from "./DrawingCanvas";
 
 interface DrawingModalProps {
@@ -24,6 +24,9 @@ const DrawingModal: React.FC<DrawingModalProps> = ({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create a Drawing</DialogTitle>
+          <DialogDescription>
+            Draw an image to use as a reference for your AI generation
+          </DialogDescription>
         </DialogHeader>
         <DrawingCanvas onSave={handleSave} width={550} height={400} />
       </DialogContent>

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Upload, Pencil } from "lucide-react";
@@ -13,7 +13,19 @@ interface ImageUploaderProps {
 const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
   const { toast } = useToast();
   const [files, setFiles] = useState<File[]>([]);
+  const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
   const [isDrawingModalOpen, setIsDrawingModalOpen] = useState(false);
+  
+  // Generate preview urls when files change
+  useEffect(() => {
+    const urls = files.map(file => URL.createObjectURL(file));
+    setFilePreviewUrls(urls);
+    
+    // Cleanup function to revoke object URLs
+    return () => {
+      urls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [files]);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -91,16 +103,24 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
         </div>
       </div>
       
-      {files.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Selected files:</p>
-          <ul className="space-y-1">
-            {files.map((file, index) => (
-              <li key={index} className="text-sm text-muted-foreground">
-                {file.name} ({Math.round(file.size / 1024)} KB)
-              </li>
+      {filePreviewUrls.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Selected images:</p>
+          <div className="grid grid-cols-2 gap-2">
+            {filePreviewUrls.map((url, index) => (
+              <div key={index} className="relative overflow-hidden rounded-md border border-muted">
+                <img 
+                  src={url} 
+                  alt={`Selected image ${index + 1}`} 
+                  className="w-full h-36 object-cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+                  <p className="text-xs text-white truncate">{files[index].name}</p>
+                  <p className="text-xs text-white/80">{Math.round(files[index].size / 1024)} KB</p>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
       

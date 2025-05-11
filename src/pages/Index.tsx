@@ -31,10 +31,6 @@ const Index = () => {
     setImages(files);
   };
 
-  const clearImages = () => {
-    setImages([]);
-  };
-
   const handleGenerate = async () => {
     if (!apiKey) {
       toast({
@@ -80,9 +76,6 @@ const Index = () => {
       } else {
         throw new Error("No image data received");
       }
-
-      // Clear the uploaded images after successful generation
-      clearImages();
     } catch (error) {
       console.error(error);
       toast({
@@ -112,54 +105,54 @@ const Index = () => {
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         
-      <TabsContent value="generate">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Input</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <PromptInput 
-                prompt={prompt} 
-                setPrompt={setPrompt} 
-                makeTransparent={makeTransparent}
-                setMakeTransparent={setMakeTransparent}
-              />
-              <ImageUploader onImageUpload={handleImageUpload} images={images} />
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleGenerate} 
-                disabled={isLoading || !prompt} 
-                className="w-full"
-              >
-                {isLoading ? "Generating..." : "Generate Image"}
-              </Button>
-            </CardFooter>
-          </Card>
+        <TabsContent value="generate">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Input</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <PromptInput 
+                  prompt={prompt} 
+                  setPrompt={setPrompt} 
+                  makeTransparent={makeTransparent}
+                  setMakeTransparent={setMakeTransparent}
+                />
+                <ImageUploader onImageUpload={handleImageUpload} />
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={isLoading || !prompt} 
+                  className="w-full"
+                >
+                  {isLoading ? "Generating..." : "Generate Image"}
+                </Button>
+              </CardFooter>
+            </Card>
 
+            <Card>
+              <CardHeader>
+                <CardTitle>Result</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResultDisplay result={result} isLoading={isLoading} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="settings">
           <Card>
             <CardHeader>
-              <CardTitle>Result</CardTitle>
+              <CardTitle>API Settings</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResultDisplay result={result} isLoading={isLoading} />
+              <APIKeyInput apiKey={apiKey} setApiKey={setApiKey} />
             </CardContent>
           </Card>
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="settings">
-        <Card>
-          <CardHeader>
-            <CardTitle>API Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <APIKeyInput apiKey={apiKey} setApiKey={setApiKey} />
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+        </TabsContent>
+      </Tabs>
 
       <footer className="mt-16 text-center text-sm text-muted-foreground">
         <p>Powered by OpenAI's GPT-Image-1 and DALL-E 3 models</p>

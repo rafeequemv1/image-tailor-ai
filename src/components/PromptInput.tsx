@@ -12,6 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Image, Cube, Square } from "lucide-react";
 
 interface PromptInputProps {
   prompt: string;
@@ -69,15 +70,24 @@ const PromptInput: React.FC<PromptInputProps> = ({
               <SelectValue placeholder="Select a style" />
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Biorender Styles</SelectLabel>
-                <SelectItem value="2d-biorender">2D Biorender</SelectItem>
-                <SelectItem value="3d-biorender">3D Biorender</SelectItem>
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel>Other Styles</SelectLabel>
-                <SelectItem value="none">No Style (Default)</SelectItem>
-              </SelectGroup>
+              <SelectItem value="2d-biorender" className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Square className="w-4 h-4" />
+                  <span>2D: Biorender Style</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="3d-biorender" className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Cube className="w-4 h-4" />
+                  <span>3D: Biorender Style</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="none" className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Image className="w-4 h-4" />
+                  <span>Default: OpenAI Standard</span>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

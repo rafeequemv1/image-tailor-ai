@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Save, Share } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 interface ResultDisplayProps {
   result: string | null;
@@ -12,6 +13,39 @@ interface ResultDisplayProps {
 
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
   const { toast } = useToast();
+  const [progress, setProgress] = React.useState(0);
+
+  // Simulate progress when loading
+  React.useEffect(() => {
+    if (isLoading) {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          // Slow down as we approach 90% to simulate waiting for API
+          const increment = prev < 30 ? 5 : prev < 60 ? 3 : prev < 90 ? 1 : 0;
+          const newValue = Math.min(prev + increment, 90);
+          return newValue;
+        });
+      }, 300);
+      
+      return () => {
+        clearInterval(interval);
+        // When loading completes, jump to 100%
+        if (!isLoading) {
+          setProgress(100);
+          // Reset after animation completes
+          const timeout = setTimeout(() => setProgress(0), 1000);
+          return () => clearTimeout(timeout);
+        }
+      };
+    } else if (result) {
+      // When result comes in, complete the progress
+      setProgress(100);
+      // Reset after animation completes
+      const timeout = setTimeout(() => setProgress(0), 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, result]);
 
   const handleDownload = () => {
     if (!result) return;
@@ -74,7 +108,14 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Generating image...</h3>
         <div className="w-full aspect-square relative">
-          <Skeleton className="w-full h-full absolute inset-0" />
+          <Skeleton className="w-full h-full absolute inset-0 animate-pulse" />
+          <div className="absolute inset-0 flex items-center justify-center flex-col gap-6 p-6">
+            <div className="text-center space-y-2">
+              <div className="text-xl font-semibold animate-fade-in">Creating your masterpiece</div>
+              <p className="text-muted-foreground">AI is processing your request</p>
+            </div>
+            <Progress value={progress} className="w-full max-w-xs animate-fade-in" />
+          </div>
         </div>
       </div>
     );

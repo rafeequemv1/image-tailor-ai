@@ -1,5 +1,6 @@
 
 interface GenerateImageRequest {
+  apiKey: string;
   images: File[];
   prompt: string;
   makeTransparent?: boolean;
@@ -14,42 +15,53 @@ interface GenerateImageResponse {
   error?: string;
 }
 
-// Hardcoded API key
-const API_KEY = "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";
-
 export async function generateImage({
+  apiKey,
   images,
   prompt,
   makeTransparent = false,
 }: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
-    // Enhance the prompt for scientific icons
-    let finalPrompt = prompt;
-    if (!finalPrompt.toLowerCase().includes("icon")) {
-      finalPrompt += ", minimalist icon";
+    if (!apiKey) {
+      return {
+        success: false,
+        error: "No API key provided",
+      };
     }
 
-    // Add transparency request if needed
-    if (makeTransparent) {
-      finalPrompt += " with transparent background";
-    }
-
-    // We'll use the generations endpoint for text-to-image icons
-    const endpoint = "https://api.openai.com/v1/images/generations";
+    const formData = new FormData();
     
+    // If transparency is requested, add it to the prompt
+    const finalPrompt = makeTransparent 
+      ? `${prompt} with transparent background` 
+      : prompt;
+    
+    // Determine which endpoint to use based on whether images were provided
+    let endpoint = "https://api.openai.com/v1/images/generations"; // Default for text-to-image
+    
+    // Always use the latest model: gpt-image-1
+    formData.append("model", "gpt-image-1");
+    
+    if (images.length > 0) {
+      // Switch to image edit endpoint when images are provided
+      endpoint = "https://api.openai.com/v1/images/edits";
+      
+      // Append each image
+      images.forEach(image => {
+        formData.append("image[]", image);
+      });
+    }
+    
+    formData.append("prompt", finalPrompt);
+    formData.append("n", "1");
+    formData.append("size", "1024x1024");
+
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: finalPrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "high", // Using 'high' instead of 'hd' as per API requirements
-      }),
+      body: formData,
     });
 
     const data = await response.json();

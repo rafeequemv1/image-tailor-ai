@@ -7,18 +7,23 @@ import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface ResultDisplayProps {
   result: string | null;
   isLoading: boolean;
+  prompt?: string;
   onApplyEdit?: (prompt: string, imageUrl: string) => void;
 }
 
-const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading, onApplyEdit }) => {
+const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading, prompt, onApplyEdit }) => {
   const { toast } = useToast();
   const [progress, setProgress] = React.useState(0);
   const [editPrompt, setEditPrompt] = useState<string>("");
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [imageTitle, setImageTitle] = useState<string>("Untitled Image");
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [showSaveDialog, setShowSaveDialog] = useState<boolean>(false);
 
   // Simulate progress when loading
   React.useEffect(() => {
@@ -100,11 +105,58 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading, onAppl
   };
 
   const handleSave = () => {
-    // This would typically save to a database or localStorage
-    toast({
-      title: "Image saved to library",
-      description: "Your image has been saved to your library",
-    });
+    // Open the save dialog to collect title information
+    setShowSaveDialog(true);
+  };
+
+  const handleSaveConfirm = async () => {
+    if (!result) return;
+    setIsSaving(true);
+
+    try {
+      // Get the current logged in user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to save images to your library",
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // Save the image data to Supabase
+      const { data, error } = await supabase
+        .from('user_images')
+        .insert({
+          user_id: user.id,
+          image_url: result,
+          prompt: prompt || editPrompt || null,
+          title: imageTitle,
+        })
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Image saved to library",
+        description: "Your image has been saved to your personal library",
+      });
+      setShowSaveDialog(false);
+    } catch (error) {
+      console.error("Error saving image:", error);
+      toast({
+        title: "Save failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred while saving",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleShare = () => {
@@ -215,6 +267,40 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading, onAppl
           Share
         </Button>
       </div>
+
+      {/* Save dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save to your library</DialogTitle>
+            <DialogDescription>
+              Give your image a title to help you find it later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Input
+                placeholder="Enter a title for your image"
+                value={imageTitle}
+                onChange={(e) => setImageTitle(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-center">
+              <img 
+                src={result} 
+                alt="Preview" 
+                className="max-h-40 object-contain rounded-md" 
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex space-x-2 justify-end">
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveConfirm} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Image"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

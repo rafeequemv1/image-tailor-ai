@@ -106,8 +106,8 @@ const App = () => {
         throw new Error("No image data received");
       }
       
-      // Clear the edit prompt
-      setEditPrompt("");
+      // Update the prompt to reflect the edit prompt
+      setPrompt(editPromptText);
     } catch (error) {
       console.error(error);
       toast({
@@ -219,10 +219,11 @@ const App = () => {
               <CardTitle>Result</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Pass the handleApplyEdit function to ResultDisplay */}
+              {/* Pass the prompt and handleApplyEdit function to ResultDisplay */}
               <ResultDisplay 
                 result={result} 
                 isLoading={isLoading} 
+                prompt={prompt}
                 onApplyEdit={handleApplyEdit}
               />
             </CardContent>

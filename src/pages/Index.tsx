@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import ImageUploader from "@/components/ImageUploader";
 import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
@@ -20,6 +22,8 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("generate");
   const [mode, setMode] = useState<"generate" | "edit">("generate");
+  const [enableMasking, setEnableMasking] = useState<boolean>(false);
+  const [maskImage, setMaskImage] = useState<File | null>(null);
 
   // Load API key from local storage
   useEffect(() => {
@@ -35,6 +39,10 @@ const Index = () => {
     if (files.length > 0 && mode === "generate") {
       setMode("edit");
     }
+  };
+  
+  const handleMaskChange = (mask: File | null) => {
+    setMaskImage(mask);
   };
 
   const handleGenerate = async () => {
@@ -76,6 +84,7 @@ const Index = () => {
         images: mode === "edit" ? images : [],
         prompt,
         makeTransparent,
+        maskImage: enableMasking ? maskImage : null,
       });
 
       if (!response.success) {
@@ -93,11 +102,13 @@ const Index = () => {
         throw new Error("No image data received");
       }
       
-      // Clear uploaded images after successful generation to prevent caching issues
+      // Clear uploaded images and masks after successful generation
       setImages([]);
+      setMaskImage(null);
       
       // Reset to generate mode after successful operation
       setMode("generate");
+      setEnableMasking(false);
     } catch (error) {
       console.error(error);
       toast({
@@ -137,7 +148,10 @@ const Index = () => {
                 <div className="flex gap-2 mb-4">
                   <Button
                     variant={mode === "generate" ? "default" : "outline"}
-                    onClick={() => setMode("generate")}
+                    onClick={() => {
+                      setMode("generate");
+                      setEnableMasking(false);
+                    }}
                     className="flex-1"
                   >
                     Generate
@@ -160,16 +174,47 @@ const Index = () => {
                 />
                 
                 {mode === "edit" && (
+                  <div className="flex items-center space-x-2 pt-2 pb-2">
+                    <Switch
+                      id="masking-mode"
+                      checked={enableMasking}
+                      onCheckedChange={(checked) => {
+                        setEnableMasking(checked);
+                        if (!checked) setMaskImage(null);
+                      }}
+                    />
+                    <Label htmlFor="masking-mode">Enable selective editing (masking)</Label>
+                    
+                    {enableMasking && (
+                      <div className="ml-auto">
+                        <p className="text-xs text-muted-foreground">
+                          Use the brush to highlight areas to edit
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {mode === "edit" && (
                   <div className="pt-2 pb-2">
                     <p className="text-sm text-muted-foreground">
                       {images.length === 0 ? 
                         "Upload an image to edit. The prompt will guide how the image is modified." :
-                        "Your uploaded image will be edited based on the prompt."}
+                        enableMasking ? 
+                          "Highlight the areas you want to edit. Only highlighted areas will be modified." :
+                          "Your uploaded image will be edited based on the prompt."
+                      }
                     </p>
                   </div>
                 )}
                 
-                <ImageUploader onImageUpload={handleImageUpload} currentImages={images} mode={mode} />
+                <ImageUploader 
+                  onImageUpload={handleImageUpload} 
+                  onMaskChange={handleMaskChange}
+                  currentImages={images} 
+                  mode={mode}
+                  enableMasking={enableMasking}
+                />
               </CardContent>
               <CardFooter>
                 <Button 

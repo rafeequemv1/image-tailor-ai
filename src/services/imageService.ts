@@ -1,9 +1,9 @@
-
 interface GenerateImageRequest {
   apiKey: string;
   images: File[];
   prompt: string;
   makeTransparent?: boolean;
+  maskImage?: File | null;
 }
 
 interface GenerateImageResponse {
@@ -20,6 +20,7 @@ export async function generateImage({
   images,
   prompt,
   makeTransparent = false,
+  maskImage = null,
 }: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
     if (!apiKey) {
@@ -37,20 +38,30 @@ export async function generateImage({
     // Determine which endpoint to use based on whether images were provided
     let endpoint = "https://api.openai.com/v1/images/generations"; // Default for text-to-image
     
-    // If there are uploaded images, use the edits endpoint with FormData
+    // If there are uploaded images, use the appropriate endpoint
     if (images.length > 0) {
       const formData = new FormData();
       
       // Always use the latest model: gpt-image-1
       formData.append("model", "gpt-image-1");
       
-      // Switch to image edit endpoint when images are provided
-      endpoint = "https://api.openai.com/v1/images/edits";
-      
-      // Append each image
-      images.forEach(image => {
-        formData.append("image", image);
-      });
+      // If mask is provided, use the edits endpoint for masked editing
+      if (maskImage) {
+        endpoint = "https://api.openai.com/v1/images/edits";
+        
+        // Append image and mask
+        formData.append("image", images[0]);
+        formData.append("mask", maskImage);
+      } 
+      // Otherwise use the regular edits endpoint
+      else {
+        endpoint = "https://api.openai.com/v1/images/edits";
+        
+        // Append each image
+        images.forEach(image => {
+          formData.append("image", image);
+        });
+      }
       
       formData.append("prompt", finalPrompt);
       formData.append("n", "1");

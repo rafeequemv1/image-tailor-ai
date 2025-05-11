@@ -6,7 +6,6 @@ import './index.css';
 import Library from './pages/Library.tsx';
 import { SidebarProvider } from './components/ui/sidebar.tsx';
 import AppLayout from './layouts/AppLayout.tsx';
-import Landing from './pages/Landing.tsx';
 import Index from './pages/Index.tsx';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
@@ -18,7 +17,6 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Index />} />
-        <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         

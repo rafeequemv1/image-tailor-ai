@@ -1,78 +1,102 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Wand2 } from "lucide-react";
-import ResultDisplay from "@/components/ResultDisplay";
+import { useToast } from "@/components/ui/use-toast";
+import IconGallery from "@/components/IconGallery";
+import Navbar from "@/components/Navbar";
 import { generateImage } from "@/services/imageService";
+import { useNavigate } from "react-router-dom";
+
+interface Icon {
+  id: string;
+  url: string;
+  prompt: string;
+}
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [prompt, setPrompt] = useState<string>("");
-  const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
-  const [imageQuality, setImageQuality] = useState<string>("high");
-  const [imageSize, setImageSize] = useState<string>("square");
-  const [result, setResult] = useState<string | null>(null);
+  const [makeTransparent, setMakeTransparent] = useState<boolean>(true);
+  const [icons, setIcons] = useState<Icon[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [lastPrompt, setLastPrompt] = useState<string>("");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  const handleGenerate = async (updatePrompt?: string) => {
-    const currentPrompt = updatePrompt || prompt;
+  useEffect(() => {
+    // Check if user is authenticated
+    const authStatus = localStorage.getItem("isAuthenticated") === "true";
+    setIsAuthenticated(authStatus);
     
-    if (!currentPrompt) {
+    // If not authenticated, redirect to landing page
+    if (!authStatus) {
+      navigate("/landing");
+      return;
+    }
+    
+    // Load any previously generated icons
+    const savedIcons = localStorage.getItem("sci_icons");
+    if (savedIcons) {
+      try {
+        setIcons(JSON.parse(savedIcons));
+      } catch (e) {
+        console.error("Failed to parse saved icons");
+      }
+    }
+  }, [navigate]);
+
+  // Save icons when they change
+  useEffect(() => {
+    if (icons.length > 0) {
+      localStorage.setItem("sci_icons", JSON.stringify(icons));
+    }
+  }, [icons]);
+
+  const handleGenerate = async () => {
+    if (!prompt) {
       toast({
         title: "No Prompt",
-        description: "Please enter a prompt to guide the image generation.",
+        description: "Please enter a prompt to generate an icon.",
         variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
-    
-    // If this is an update to an existing image, we'll use the new prompt
-    // otherwise we'll use the prompt from the input field
-    const finalPrompt = updatePrompt 
-      ? `${lastPrompt}. Update it by: ${updatePrompt}` 
-      : currentPrompt;
-
-    // Save this prompt as the last used prompt for potential future updates
-    if (!updatePrompt) {
-      setLastPrompt(currentPrompt);
-    }
 
     try {
+      const scientificPrompt = `Scientific icon of ${prompt}, simple, professional, high quality`;
+      
       const response = await generateImage({
-        prompt: finalPrompt,
+        images: [],
+        prompt: scientificPrompt,
         makeTransparent,
-        quality: imageQuality,
-        size: imageSize,
       });
 
       if (!response.success) {
-        throw new Error(response.error || "Failed to generate image");
+        throw new Error(response.error || "Failed to generate icon");
       }
 
-      // If we have a base64 string, use it directly
-      if (response.data?.b64_json) {
-        setResult(`data:image/png;base64,${response.data.b64_json}`);
-      } 
-      // Otherwise use the URL
-      else if (response.data?.url) {
-        setResult(response.data.url);
-      } else {
+      const iconUrl = response.data?.url;
+      
+      if (!iconUrl) {
         throw new Error("No image data received");
       }
+      
+      const newIcon = {
+        id: Date.now().toString(),
+        url: iconUrl,
+        prompt: scientificPrompt,
+      };
 
-      // Clear the prompt input if this was an initial generation (not an update)
-      if (!updatePrompt) {
-        setPrompt("");
-      }
+      setIcons((prev) => [newIcon, ...prev]);
+      
+      toast({
+        title: "Icon generated",
+        description: "Your scientific icon was generated successfully!",
+      });
     } catch (error) {
       console.error(error);
       toast({
@@ -85,121 +109,62 @@ const Index = () => {
     }
   };
 
-  const handleUpdateImage = (updatePrompt: string) => {
-    handleGenerate(updatePrompt);
-  };
+  if (!isAuthenticated) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center space-x-2">
-          <img src="/lovable-uploads/9a3cd3bf-f8a7-4414-b9c5-3e4b3017882d.png" alt="Sci-Icons Logo" className="h-8 w-8" />
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            Sci-Icons
-          </h1>
-        </div>
-        <p className="text-muted-foreground mt-2">
-          Generate scientific icons with AI
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="overflow-hidden">
-          <CardContent className="p-6 space-y-6">
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar isAuthenticated={isAuthenticated} />
+      
+      <main className="flex-1 container py-8">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6">Generate Scientific Icons</h1>
+          
+          {/* Prompt Input */}
+          <div className="space-y-4">
             <div>
-              <label htmlFor="prompt" className="block text-sm font-medium mb-2">
-                Image Description
-              </label>
-              <Textarea
+              <Label htmlFor="prompt">Describe your scientific icon</Label>
+              <Input
                 id="prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the image you want to generate. Be specific about style, colors, subjects, and composition."
-                className="w-full h-32 resize-none"
+                placeholder="e.g., DNA double helix, quantum physics model, chemical structure..."
+                className="mb-2"
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="image-quality" className="block text-sm font-medium mb-2">
-                  Image Quality
-                </label>
-                <Select value={imageQuality} onValueChange={setImageQuality}>
-                  <SelectTrigger id="image-quality">
-                    <SelectValue placeholder="Select quality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label htmlFor="image-size" className="block text-sm font-medium mb-2">
-                  Image Size
-                </label>
-                <Select value={imageSize} onValueChange={setImageSize}>
-                  <SelectTrigger id="image-size">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="square">Square (1024×1024)</SelectItem>
-                    <SelectItem value="portrait">Portrait (1024×1792)</SelectItem>
-                    <SelectItem value="landscape">Landscape (1792×1024)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
+            
             <div className="flex items-center space-x-2">
               <Switch
                 id="transparency-mode"
                 checked={makeTransparent}
                 onCheckedChange={setMakeTransparent}
               />
-              <Label htmlFor="transparency-mode">Transparent Background</Label>
+              <Label htmlFor="transparency-mode">Transparent background</Label>
             </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">
-                For best results, be detailed in your description including style, mood, lighting, and composition.
-                <br />
-                Examples: "A serene mountain landscape at sunset with pink and purple hues", "A futuristic
-                cyberpunk city with neon lights"
-              </p>
-              <p className="text-xs text-amber-500">
-                Note: The system will automatically retry if rate limits are encountered. If errors persist, please wait
-                a minute before trying again.
-              </p>
-            </div>
-
-            <Button 
-              onClick={() => handleGenerate()}
-              disabled={isLoading || !prompt} 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              <Wand2 className="mr-2 h-4 w-4" />
-              {isLoading ? "Generating..." : "Generate Image"}
-            </Button>
             
-            <p className="text-xs text-center text-muted-foreground">
-              Note: If generation fails due to rate limits, the system will automatically retry up to 3 times.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <ResultDisplay 
-              result={result} 
-              isLoading={isLoading} 
-              onUpdateImage={handleUpdateImage}
-            />
-          </CardContent>
-        </Card>
-      </div>
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isLoading || !prompt} 
+              className="w-full"
+            >
+              {isLoading ? "Generating..." : "Generate Icon"}
+            </Button>
+          </div>
+        </div>
+        
+        {/* Icon Gallery */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-4">Your Icons</h2>
+          <IconGallery icons={icons} isLoading={isLoading} />
+        </div>
+      </main>
+      
+      <footer className="border-t py-6">
+        <div className="container text-center text-sm text-muted-foreground">
+          <p>&copy; {new Date().getFullYear()} Sci-Icons. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 };

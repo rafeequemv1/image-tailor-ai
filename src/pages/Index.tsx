@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -10,56 +9,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Wand2 } from "lucide-react";
 import ResultDisplay from "@/components/ResultDisplay";
 import { generateImage } from "@/services/imageService";
-import IconGallery from "@/components/IconGallery";
 
 const Index = () => {
   const { toast } = useToast();
-  const [apiKey, setApiKey] = useState<string>("");
-  const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
   const [imageQuality, setImageQuality] = useState<string>("auto");
   const [imageSize, setImageSize] = useState<string>("square");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("generate");
-  const [mode, setMode] = useState<"generate" | "edit">("generate");
-  const [enableMasking, setEnableMasking] = useState<boolean>(false);
-  const [maskImage, setMaskImage] = useState<File | null>(null);
-  const [referenceImages, setReferenceImages] = useState<File[]>([]);
+  const [lastPrompt, setLastPrompt] = useState<string>("");
 
-  // Load API key from local storage
-  useEffect(() => {
-    const savedKey = localStorage.getItem("openai_api_key");
-    if (savedKey) {
-      setApiKey(savedKey);
-    }
-  }, []);
-
-  const handleImageUpload = (files: File[]) => {
-    setImages(files);
-    // If user uploads an image, automatically switch to edit mode
-    if (files.length > 0 && mode === "generate") {
-      setMode("edit");
-    }
-  };
-  
-  const handleMaskChange = (mask: File | null) => {
-    setMaskImage(mask);
-  };
-
-  const handleGenerate = async () => {
-    if (!apiKey) {
-      toast({
-        title: "Missing API Key",
-        description: "Please enter your OpenAI API key in the settings tab.",
-        variant: "destructive",
-      });
-      setActiveTab("settings");
-      return;
-    }
-
-    if (!prompt) {
+  const handleGenerate = async (updatePrompt?: string) => {
+    const currentPrompt = updatePrompt || prompt;
+    
+    if (!currentPrompt) {
       toast({
         title: "No Prompt",
         description: "Please enter a prompt to guide the image generation.",
@@ -68,26 +32,23 @@ const Index = () => {
       return;
     }
 
-    // For edit mode, make sure there's an image
-    if (mode === "edit" && images.length === 0) {
-      toast({
-        title: "No Image Selected",
-        description: "Please upload an image to edit.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
-    setResult(null);
+    
+    // If this is an update to an existing image, we'll use the new prompt
+    // otherwise we'll use the prompt from the input field
+    const finalPrompt = updatePrompt 
+      ? `${lastPrompt}. Update it by: ${updatePrompt}` 
+      : currentPrompt;
+
+    // Save this prompt as the last used prompt for potential future updates
+    if (!updatePrompt) {
+      setLastPrompt(currentPrompt);
+    }
 
     try {
       const response = await generateImage({
-        apiKey,
-        images: mode === "edit" ? images : [],
-        prompt,
+        prompt: finalPrompt,
         makeTransparent,
-        maskImage: enableMasking ? maskImage : null,
         quality: imageQuality,
         size: imageSize,
       });
@@ -106,14 +67,11 @@ const Index = () => {
       } else {
         throw new Error("No image data received");
       }
-      
-      // Clear uploaded images and masks after successful generation
-      setImages([]);
-      setMaskImage(null);
-      
-      // Reset to generate mode after successful operation
-      setMode("generate");
-      setEnableMasking(false);
+
+      // Clear the prompt input if this was an initial generation (not an update)
+      if (!updatePrompt) {
+        setPrompt("");
+      }
     } catch (error) {
       console.error(error);
       toast({
@@ -126,11 +84,8 @@ const Index = () => {
     }
   };
 
-  const handleReferenceUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files);
-      setReferenceImages(newFiles);
-    }
+  const handleUpdateImage = (updatePrompt: string) => {
+    handleGenerate(updatePrompt);
   };
 
   return (
@@ -219,34 +174,8 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="reference-images" className="block text-sm font-medium">
-                Reference Images (Optional)
-              </label>
-              <div className="border border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-                   onClick={() => document.getElementById("reference-upload")?.click()}>
-                <div className="flex flex-col items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <p className="mt-2 text-sm">Upload Reference</p>
-                </div>
-                <input 
-                  id="reference-upload" 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*" 
-                  multiple 
-                  onChange={handleReferenceUpload}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Upload reference images to guide the scientific icon generation (optional).
-              </p>
-            </div>
-
             <Button 
-              onClick={handleGenerate} 
+              onClick={() => handleGenerate()}
               disabled={isLoading || !prompt} 
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
             >
@@ -262,14 +191,13 @@ const Index = () => {
 
         <Card>
           <CardContent className="p-6">
-            <ResultDisplay result={result} isLoading={isLoading} />
+            <ResultDisplay 
+              result={result} 
+              isLoading={isLoading} 
+              onUpdateImage={handleUpdateImage}
+            />
           </CardContent>
         </Card>
-      </div>
-
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-6 text-center">Icon Gallery</h2>
-        <IconGallery />
       </div>
     </div>
   );

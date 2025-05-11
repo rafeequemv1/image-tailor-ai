@@ -12,7 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Image, Box, Square } from "lucide-react";
+import { Image, Box, Square, Sparkles } from "lucide-react";
 
 interface PromptInputProps {
   prompt: string;
@@ -21,6 +21,8 @@ interface PromptInputProps {
   setMakeTransparent: (make: boolean) => void;
   style?: string;
   setStyle?: (style: string) => void;
+  quality?: string;
+  setQuality?: (quality: string) => void;
 }
 
 const PromptInput: React.FC<PromptInputProps> = ({ 
@@ -29,7 +31,9 @@ const PromptInput: React.FC<PromptInputProps> = ({
   makeTransparent,
   setMakeTransparent,
   style,
-  setStyle
+  setStyle,
+  quality,
+  setQuality
 }) => {
   return (
     <div className="space-y-4">
@@ -86,6 +90,45 @@ const PromptInput: React.FC<PromptInputProps> = ({
                 <div className="flex items-center gap-2">
                   <Image className="w-4 h-4" />
                   <span>Default: OpenAI Standard</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      
+      {setQuality && (
+        <div className="space-y-2">
+          <label
+            htmlFor="quality"
+            className="block text-sm font-medium text-foreground"
+          >
+            Rendering Quality
+          </label>
+          <Select
+            value={quality}
+            onValueChange={setQuality}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select quality" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low" className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 opacity-30" />
+                  <span>Low (Faster)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="standard" className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 opacity-60" />
+                  <span>Standard (Balanced)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="high" className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span>High (Detailed)</span>
                 </div>
               </SelectItem>
             </SelectContent>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +10,13 @@ import { generateImage } from "@/services/imageService";
 
 const Index = () => {
   const { toast } = useToast();
-  // Hardcoded API key - replace with a valid OpenAI API key
-  const apiKey = "sk-your-openai-api-key-here";
+  // Updated API key with the provided key
+  const apiKey = "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";
   const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
   const [style, setStyle] = useState<string>("none");
+  const [quality, setQuality] = useState<string>("standard");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -42,6 +44,7 @@ const Index = () => {
         prompt,
         makeTransparent,
         style,
+        quality,
       });
 
       if (!response.success) {
@@ -94,6 +97,8 @@ const Index = () => {
               setMakeTransparent={setMakeTransparent}
               style={style}
               setStyle={setStyle}
+              quality={quality}
+              setQuality={setQuality}
             />
             <ImageUploader onImageUpload={handleImageUpload} />
           </CardContent>

@@ -5,6 +5,7 @@ interface GenerateImageRequest {
   prompt: string;
   makeTransparent?: boolean;
   style?: string;
+  quality?: string;
 }
 
 interface GenerateImageResponse {
@@ -22,6 +23,7 @@ export async function generateImage({
   prompt,
   makeTransparent = false,
   style = "none",
+  quality = "standard"
 }: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
     if (!apiKey) {
@@ -42,6 +44,13 @@ export async function generateImage({
     } else if (style === "3d-biorender") {
       finalPrompt = `${finalPrompt} in 3D biorender style, detailed 3D scientific model, molecular visualization`;
     }
+
+    // Apply quality settings to the prompt
+    if (quality === "high") {
+      finalPrompt = `${finalPrompt}, highly detailed, sharp focus, professional lighting, 8k resolution`;
+    } else if (quality === "low") {
+      finalPrompt = `${finalPrompt}, simple, basic details`;
+    }
     
     // Determine whether to use text-to-image or image-to-image endpoint
     const hasImages = images.length > 0;
@@ -53,6 +62,11 @@ export async function generateImage({
       formData.append("prompt", finalPrompt);
       formData.append("n", "1");
       formData.append("size", "1024x1024");
+      
+      // Set quality through detail parameter if supported
+      if (quality === "high") {
+        formData.append("quality", "hd");
+      }
       
       // Append the first image as the main image
       formData.append("image", images[0]);
@@ -88,12 +102,17 @@ export async function generateImage({
       };
     } else {
       // Text-to-image generation uses JSON
-      const requestBody = {
+      const requestBody: any = {
         model: "gpt-image-1",
         prompt: finalPrompt,
         n: 1,
         size: "1024x1024",
       };
+      
+      // Set quality parameter if needed
+      if (quality === "high") {
+        requestBody.quality = "hd";
+      }
 
       const response = await fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
-import { LogIn } from "lucide-react";
+import { LogIn, Mail, Lock } from "lucide-react";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -64,75 +65,103 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="flex flex-grow items-center justify-center w-full px-4 py-12 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Login</h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Enter your email and password to sign in
-            </p>
-          </div>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Header with logo/branding */}
+      <header className="w-full py-4 px-6 bg-white border-b">
+        <div className="container mx-auto">
+          <Link to="/" className="text-xl font-bold">ImageAI</Link>
+        </div>
+      </header>
+      
+      {/* Main content area */}
+      <main className="flex-grow flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <Card className="w-full max-w-md mx-auto shadow-lg">
+          <CardHeader className="text-center space-y-2">
+            <h1 className="text-2xl font-bold">Welcome Back</h1>
+            <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
+          </CardHeader>
           
-          <form onSubmit={handleLogin} className="mt-8 space-y-6">
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
                   Email
                 </label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1"
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
               
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1"
-                />
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </label>
+                  <Link to="#" className="text-xs text-primary hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
               <Button 
                 type="submit" 
-                disabled={loading} 
-                className="w-full flex justify-center items-center gap-2"
+                className="w-full"
+                disabled={loading}
               >
-                <LogIn className="h-4 w-4" />
-                {loading ? "Logging in..." : "Login"}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Logging in...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </span>
+                )}
               </Button>
-            </div>
-          </form>
+            </form>
+          </CardContent>
           
-          <div className="mt-4 text-center text-sm">
-            <span className="text-gray-500">
+          <CardFooter className="flex justify-center border-t p-6">
+            <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link to="/register" className="font-medium text-black hover:underline">
-                Sign Up
+              <Link to="/register" className="font-medium text-primary hover:underline">
+                Sign up
               </Link>
-            </span>
-          </div>
-        </div>
-      </div>
+            </p>
+          </CardFooter>
+        </Card>
+      </main>
+      
       <Footer />
     </div>
   );

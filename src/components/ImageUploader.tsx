@@ -1,12 +1,15 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Upload, Pencil } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import DrawingModal from "./DrawingModal";
+
 interface ImageUploaderProps {
   onImageUpload: (files: File[]) => void;
 }
+
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   onImageUpload
 }) => {
@@ -27,6 +30,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       urls.forEach(url => URL.revokeObjectURL(url));
     };
   }, [files]);
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
@@ -53,6 +57,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       }
     }
   };
+  
   const handleSaveDrawing = (file: File) => {
     setFiles([file]);
     onImageUpload([file]);
@@ -61,6 +66,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       description: "Your drawing is ready to be used as a reference"
     });
   };
+  
   return <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
@@ -87,17 +93,19 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           <p className="text-sm font-medium">Selected images:</p>
           <div className="grid grid-cols-2 gap-2">
             {filePreviewUrls.map((url, index) => {
-          // Ensure the file exists before trying to access its properties
-          const file = files[index];
-          if (!file) return null;
-          return <div key={index} className="relative overflow-hidden rounded-md border border-muted">
+              // Ensure the file exists before trying to access its properties
+              const file = files[index];
+              if (!file) return null;
+              return (
+                <div key={index} className="relative overflow-hidden rounded-md border border-muted">
                   <img src={url} alt={`Selected image ${index + 1}`} className="w-full h-36 object-cover" />
                   <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
                     <p className="text-xs text-white truncate">{file.name}</p>
                     <p className="text-xs text-white/80">{Math.round(file.size / 1024)} KB</p>
                   </div>
-                </div>;
-        })}
+                </div>
+              );
+            })}
           </div>
         </div>}
       
@@ -105,4 +113,5 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       <DrawingModal open={isDrawingModalOpen} onOpenChange={setIsDrawingModalOpen} onSaveDrawing={handleSaveDrawing} />
     </div>;
 };
+
 export default ImageUploader;

@@ -1,23 +1,30 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface ImageUploaderProps {
   onImageUpload: (files: File[]) => void;
+  currentImages?: File[];
+  mode?: "generate" | "edit";
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
-  const [files, setFiles] = useState<File[]>([]);
+const ImageUploader: React.FC<ImageUploaderProps> = ({ 
+  onImageUpload, 
+  currentImages = [], 
+  mode = "generate" 
+}) => {
+  const [files, setFiles] = useState<File[]>(currentImages);
   const [previews, setPreviews] = useState<string[]>([]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...newFiles]);
-
-      // Create and store image previews
-      newFiles.forEach((file) => {
+  useEffect(() => {
+    // Reset previews when currentImages changes
+    setFiles(currentImages);
+    setPreviews([]);
+    
+    // Create and store image previews for currentImages
+    if (currentImages.length > 0) {
+      currentImages.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
           if (e.target?.result) {
@@ -26,23 +33,70 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
         };
         reader.readAsDataURL(file);
       });
+    }
+  }, [currentImages]);
 
-      // Pass the files to the parent component
-      onImageUpload([...files, ...newFiles]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      
+      // In edit mode, we replace the current image(s)
+      if (mode === "edit") {
+        setFiles(newFiles);
+        setPreviews([]);
+        
+        // Create previews for new files
+        newFiles.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              setPreviews((prev) => [...prev, e.target!.result as string]);
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+        
+        // Pass only the new files to the parent
+        onImageUpload(newFiles);
+      } else {
+        // In generate mode, we add to the current image(s)
+        setFiles((prev) => [...prev, ...newFiles]);
+        
+        // Create previews for new files
+        newFiles.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              setPreviews((prev) => [...prev, e.target!.result as string]);
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+        
+        // Pass all files to the parent
+        onImageUpload([...files, ...newFiles]);
+      }
     }
   };
 
   const removeImage = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    const newFiles = files.filter((_, i) => i !== index);
+    setFiles(newFiles);
     setPreviews((prev) => prev.filter((_, i) => i !== index));
-    onImageUpload(files.filter((_, i) => i !== index));
+    onImageUpload(newFiles);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium">Upload Images (Optional)</h3>
-        <p className="text-xs text-muted-foreground">You can upload multiple images</p>
+        <h3 className="text-sm font-medium">
+          {mode === "edit" ? "Upload Image to Edit" : "Upload Images (Optional)"}
+        </h3>
+        {mode === "edit" ? (
+          <p className="text-xs text-muted-foreground">Required for editing</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">Optional for generation</p>
+        )}
       </div>
       <div className="flex items-center justify-center w-full">
         <label
@@ -64,7 +118,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
             type="file"
             className="hidden"
             accept="image/*"
-            multiple
+            multiple={mode !== "edit"}
             onChange={handleFileChange}
           />
         </label>
@@ -72,7 +126,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
 
       {previews.length > 0 && (
         <div className="mt-4">
-          <h3 className="text-sm font-medium mb-2">Uploaded Images</h3>
+          <h3 className="text-sm font-medium mb-2">
+            {mode === "edit" ? "Image to Edit" : "Uploaded Images"}
+          </h3>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {previews.map((preview, index) => (
               <div

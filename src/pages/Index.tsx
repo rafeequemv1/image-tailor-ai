@@ -19,6 +19,7 @@ const Index = () => {
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("generate");
+  const [mode, setMode] = useState<"generate" | "edit">("generate");
 
   // Load API key from local storage
   useEffect(() => {
@@ -30,6 +31,10 @@ const Index = () => {
 
   const handleImageUpload = (files: File[]) => {
     setImages(files);
+    // If user uploads an image, automatically switch to edit mode
+    if (files.length > 0 && mode === "generate") {
+      setMode("edit");
+    }
   };
 
   const handleGenerate = async () => {
@@ -52,13 +57,23 @@ const Index = () => {
       return;
     }
 
+    // For edit mode, make sure there's an image
+    if (mode === "edit" && images.length === 0) {
+      toast({
+        title: "No Image Selected",
+        description: "Please upload an image to edit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     setResult(null);
 
     try {
       const response = await generateImage({
         apiKey,
-        images,
+        images: mode === "edit" ? images : [],
         prompt,
         makeTransparent,
       });
@@ -80,6 +95,9 @@ const Index = () => {
       
       // Clear uploaded images after successful generation to prevent caching issues
       setImages([]);
+      
+      // Reset to generate mode after successful operation
+      setMode("generate");
     } catch (error) {
       console.error(error);
       toast({
@@ -113,24 +131,53 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Input</CardTitle>
+                <CardTitle>{mode === "edit" ? "Edit Image" : "Generate Image"}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    variant={mode === "generate" ? "default" : "outline"}
+                    onClick={() => setMode("generate")}
+                    className="flex-1"
+                  >
+                    Generate
+                  </Button>
+                  <Button
+                    variant={mode === "edit" ? "default" : "outline"}
+                    onClick={() => setMode("edit")}
+                    className="flex-1"
+                  >
+                    Edit Image
+                  </Button>
+                </div>
+                
                 <PromptInput 
                   prompt={prompt} 
                   setPrompt={setPrompt} 
                   makeTransparent={makeTransparent}
                   setMakeTransparent={setMakeTransparent}
+                  mode={mode}
                 />
-                <ImageUploader onImageUpload={handleImageUpload} />
+                
+                {mode === "edit" && (
+                  <div className="pt-2 pb-2">
+                    <p className="text-sm text-muted-foreground">
+                      {images.length === 0 ? 
+                        "Upload an image to edit. The prompt will guide how the image is modified." :
+                        "Your uploaded image will be edited based on the prompt."}
+                    </p>
+                  </div>
+                )}
+                
+                <ImageUploader onImageUpload={handleImageUpload} currentImages={images} mode={mode} />
               </CardContent>
               <CardFooter>
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isLoading || !prompt} 
+                  disabled={isLoading || !prompt || (mode === "edit" && images.length === 0)} 
                   className="w-full"
                 >
-                  {isLoading ? "Generating..." : "Generate Image"}
+                  {isLoading ? "Processing..." : mode === "edit" ? "Edit Image" : "Generate Image"}
                 </Button>
               </CardFooter>
             </Card>

@@ -7,7 +7,6 @@ import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
 import { generateImage } from "@/services/imageService";
 import Footer from "@/components/Footer";
-import Navigation from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
@@ -258,10 +257,8 @@ const App = () => {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-8 max-w-5xl flex-grow">
+    <div className="flex flex-col">
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
             AI Image Generator

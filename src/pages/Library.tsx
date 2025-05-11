@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -10,21 +9,43 @@ import { Image, Download, Trash2, Edit } from "lucide-react";
 import { 
   Pagination, 
   PaginationContent, 
+  PaginationEllipsis, 
   PaginationItem, 
   PaginationLink, 
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+interface UserImage {
+  id: string;
+  user_id: string;
+  image_url: string;
+  prompt: string;
+  title: string;
+  created_at: string;
+}
 
 const Library = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [images, setImages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [images, setImages] = useState<UserImage[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<any>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
   const imagesPerPage = 12;
 
   useEffect(() => {
@@ -36,178 +57,134 @@ const Library = () => {
         return;
       }
       
-      fetchImages(currentPage);
+      setUser(session.user);
+      fetchUserImages(session.user.id);
     };
     
     checkUser();
-  }, [navigate, currentPage]);
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        navigate("/login");
+      } else if (session) {
+        setUser(session.user);
+        fetchUserImages(session.user.id);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
-  const fetchImages = async (page: number) => {
-    setLoading(true);
+  const fetchUserImages = async (userId: string) => {
+    setIsLoading(true);
     try {
-      // Count total images first to calculate pagination
-      const { count, error: countError } = await supabase
+      let { data, error, count } = await supabase
         .from('user_images')
-        .select('*', { count: 'exact', head: true });
-      
-      if (countError) throw countError;
-      
-      // Calculate total pages
-      const totalPages = Math.ceil((count || 0) / imagesPerPage);
-      setTotalPages(totalPages || 1);
-      
-      // Then fetch the current page of images
-      const from = (page - 1) * imagesPerPage;
-      const to = from + imagesPerPage - 1;
-      
-      const { data, error } = await supabase
-        .from('user_images')
-        .select('*')
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .range(from, to);
-      
-      if (error) throw error;
+        .range((currentPage - 1) * imagesPerPage, currentPage * imagesPerPage - 1);
+
+      if (error) {
+        throw error;
+      }
       
       setImages(data || []);
+      setTotalPages(Math.ceil((count || 0) / imagesPerPage));
     } catch (error) {
-      console.error('Error fetching images:', error);
+      console.error("Error fetching images:", error);
       toast({
-        title: "Failed to load images",
+        title: "Error fetching images",
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleDownload = (imageUrl: string, title: string) => {
-    // Create a temporary link element
-    const a = document.createElement("a");
-    a.href = imageUrl;
-    a.download = `${title || `ai-image-${Date.now()}`}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = `${title || 'image'}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     toast({
-      title: "Download started",
-      description: "Your image is being downloaded",
+      title: "Image download started",
+      description: "Your image will be downloaded shortly",
     });
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (imageId: string) => {
+    setIsLoading(true);
     try {
       const { error } = await supabase
         .from('user_images')
         .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Remove the image from state
-      setImages(images.filter(img => img.id !== id));
-      
+        .eq('id', imageId);
+
+      if (error) {
+        throw error;
+      }
+
+      setImages(images.filter(image => image.id !== imageId));
       toast({
         title: "Image deleted",
-        description: "The image has been removed from your library",
+        description: "The image has been successfully deleted from your library",
       });
+      fetchUserImages(user.id);
     } catch (error) {
-      console.error('Error deleting image:', error);
+      console.error("Error deleting image:", error);
       toast({
-        title: "Delete failed",
+        title: "Error deleting image",
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleEditImage = (imageUrl: string, prompt: string) => {
-    // Store the edit information in session storage
-    sessionStorage.setItem('editImage', JSON.stringify({
-      imageUrl,
-      prompt
-    }));
-    // Navigate to the image editor
-    navigate('/app');
+  const handleEdit = (imageUrl: string, prompt: string) => {
+    sessionStorage.setItem('editImage', JSON.stringify({ imageUrl, prompt }));
+    navigate("/app");
   };
 
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-    
-    return (
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
-          </PaginationItem>
-          
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            // Logic to show pagination numbers around the current page
-            let pageNum;
-            if (totalPages <= 5) {
-              pageNum = i + 1;
-            } else if (currentPage <= 3) {
-              pageNum = i + 1;
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 4 + i;
-            } else {
-              pageNum = currentPage - 2 + i;
-            }
-            
-            return (
-              <PaginationItem key={pageNum}>
-                <PaginationLink 
-                  isActive={pageNum === currentPage}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className="cursor-pointer"
-                >
-                  {pageNum}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          })}
-          
-          <PaginationItem>
-            <PaginationNext 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    );
+  const generatePagination = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+        pages.push(i);
+      } else if (i === 2 && pages[pages.length - 1] !== 2) {
+        pages.push("...");
+      } else if (i === totalPages - 1 && pages[pages.length - 1] !== totalPages - 1) {
+        pages.push("...");
+      }
+    }
+    return pages;
   };
+
+  if (!user) return null;
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-8 max-w-7xl flex-grow">
+    <div className="flex flex-col">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center gap-2">
             <Image className="h-8 w-8 text-blue-600" />
             Your Image Library
           </h1>
           <p className="text-muted-foreground mt-2">
-            All your AI-generated images in one place
+            View, download, and manage your generated images
           </p>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="aspect-square">
-                  <Skeleton className="h-full w-full" />
-                </div>
-                <CardFooter className="p-4 flex justify-between">
-                  <Skeleton className="h-8 w-24" />
-                  <Skeleton className="h-8 w-24" />
-                </CardFooter>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Card key={index} className="overflow-hidden">
+                <div className="aspect-square bg-muted animate-pulse" />
               </Card>
             ))}
           </div>
@@ -218,68 +195,117 @@ const Library = () => {
             <p className="text-muted-foreground mb-6">
               Generate some images to see them here
             </p>
-            <Button onClick={() => navigate("/app")}>
-              Create New Image
-            </Button>
+            <Button onClick={() => navigate("/app")}>Generate Images</Button>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {images.map((image) => (
                 <Card key={image.id} className="overflow-hidden group">
-                  <div className="aspect-square relative">
+                  <div className="relative aspect-square">
                     <img 
                       src={image.image_url} 
-                      alt={image.title || "Generated image"}
-                      className="h-full w-full object-cover"
+                      alt={image.title || "Generated image"} 
+                      className="object-cover w-full h-full" 
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="secondary" 
-                          size="sm" 
-                          onClick={() => handleDownload(image.image_url, image.title)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="secondary" 
-                          size="sm" 
-                          onClick={() => handleEditImage(image.image_url, image.prompt || "")}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="secondary" 
-                          size="sm"
-                          onClick={() => handleDelete(image.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-9 w-9 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40" 
+                        onClick={() => handleDownload(image.image_url, image.title)}
+                      >
+                        <Download className="h-4 w-4 text-white" />
+                        <span className="sr-only">Download</span>
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-9 w-9 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40" 
+                        onClick={() => handleEdit(image.image_url, image.prompt)}
+                      >
+                        <Edit className="h-4 w-4 text-white" />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-9 w-9 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40 hover:border-red-400 hover:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4 text-white" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Image</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete this image from your library.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              className="bg-red-500 hover:bg-red-600"
+                              onClick={() => handleDelete(image.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
-                  <CardFooter className="p-3 flex flex-col items-start gap-1">
-                    <h3 className="font-medium text-sm truncate w-full">
-                      {image.title || "Untitled Image"}
-                    </h3>
-                    {image.prompt && (
-                      <p className="text-xs text-muted-foreground truncate w-full">
-                        {image.prompt.length > 50 ? `${image.prompt.slice(0, 50)}...` : image.prompt}
-                      </p>
-                    )}
+                  <CardFooter className="p-3">
+                    <p className="text-sm truncate w-full" title={image.title || image.prompt}>
+                      {image.title || (image.prompt?.substring(0, 30) + "...") || "Untitled"}
+                    </p>
                   </CardFooter>
                 </Card>
               ))}
             </div>
             
-            <div className="flex justify-center mt-8 mb-4">
-              {renderPagination()}
-            </div>
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination>
+                  <PaginationContent>
+                    {currentPage > 1 && (
+                      <PaginationItem>
+                        <PaginationPrevious onClick={() => setCurrentPage(currentPage - 1)} />
+                      </PaginationItem>
+                    )}
+                    
+                    {generatePagination().map((page, index) => (
+                      <PaginationItem key={index}>
+                        {page === "..." ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page as number)}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    ))}
+                    
+                    {currentPage < totalPages && (
+                      <PaginationItem>
+                        <PaginationNext onClick={() => setCurrentPage(currentPage + 1)} />
+                      </PaginationItem>
+                    )}
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </>
         )}
       </div>
-      
       <Footer />
     </div>
   );

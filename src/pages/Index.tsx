@@ -1,48 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import ImageUploader from "@/components/ImageUploader";
 import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
-import APIKeyInput from "@/components/APIKeyInput";
 import { generateImage } from "@/services/imageService";
 
 const Index = () => {
   const { toast } = useToast();
-  const [apiKey, setApiKey] = useState<string>("");
+  // Hardcoded API key - replace with a valid OpenAI API key
+  const apiKey = "sk-your-openai-api-key-here";
   const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
   const [style, setStyle] = useState<string>("none");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("generate");
-
-  // Load API key from local storage
-  useEffect(() => {
-    const savedKey = localStorage.getItem("openai_api_key");
-    if (savedKey) {
-      setApiKey(savedKey);
-    }
-  }, []);
 
   const handleImageUpload = (files: File[]) => {
     setImages(files);
   };
 
   const handleGenerate = async () => {
-    if (!apiKey) {
-      toast({
-        title: "Missing API Key",
-        description: "Please enter your OpenAI API key in the settings tab.",
-        variant: "destructive",
-      });
-      setActiveTab("settings");
-      return;
-    }
-
     if (!prompt) {
       toast({
         title: "No Prompt",
@@ -101,62 +81,42 @@ const Index = () => {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 mb-6">
-          <TabsTrigger value="generate">Generate</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="generate">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Input</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <PromptInput 
-                  prompt={prompt} 
-                  setPrompt={setPrompt} 
-                  makeTransparent={makeTransparent}
-                  setMakeTransparent={setMakeTransparent}
-                  style={style}
-                  setStyle={setStyle}
-                />
-                <ImageUploader onImageUpload={handleImageUpload} />
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  onClick={handleGenerate} 
-                  disabled={isLoading || !prompt} 
-                  className="w-full"
-                >
-                  {isLoading ? "Generating..." : "Generate Image"}
-                </Button>
-              </CardFooter>
-            </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Input</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <PromptInput 
+              prompt={prompt} 
+              setPrompt={setPrompt} 
+              makeTransparent={makeTransparent}
+              setMakeTransparent={setMakeTransparent}
+              style={style}
+              setStyle={setStyle}
+            />
+            <ImageUploader onImageUpload={handleImageUpload} />
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isLoading || !prompt} 
+              className="w-full"
+            >
+              {isLoading ? "Generating..." : "Generate Image"}
+            </Button>
+          </CardFooter>
+        </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Result</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResultDisplay result={result} isLoading={isLoading} />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>API Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <APIKeyInput apiKey={apiKey} setApiKey={setApiKey} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle>Result</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResultDisplay result={result} isLoading={isLoading} />
+          </CardContent>
+        </Card>
+      </div>
 
       <footer className="mt-16 text-center text-sm text-muted-foreground">
         <p>Powered by OpenAI's GPT-Image-1 model</p>

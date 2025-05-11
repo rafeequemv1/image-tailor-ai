@@ -92,6 +92,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     fabricCanvas.renderAll();
   }, [tool, fabricCanvas, color]);
 
+  // Fix: Add text to canvas when text tool is selected
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    
+    // When the text tool is selected, add a click handler to the canvas
+    const handleTextAdd = (opt: fabric.IEvent<MouseEvent>) => {
+      if (tool === "text") {
+        const pointer = fabricCanvas.getPointer(opt.e);
+        addText(pointer);
+      }
+    };
+    
+    if (tool === "text") {
+      fabricCanvas.on('mouse:down', handleTextAdd);
+    } else {
+      fabricCanvas.off('mouse:down', handleTextAdd);
+    }
+    
+    return () => {
+      fabricCanvas.off('mouse:down', handleTextAdd);
+    };
+  }, [tool, fabricCanvas, color]);
+
   const handleClear = () => {
     if (!fabricCanvas) return;
     
@@ -251,10 +274,21 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
   const handleTextTool = () => {
     setTool("text");
-    toast({
-      title: "Text tool activated",
-      description: "Click anywhere on the canvas to add text",
-    });
+    
+    // Fix: Add text immediately at center of canvas when text tool is clicked
+    if (fabricCanvas) {
+      const center = {
+        x: fabricCanvas.width! / 2,
+        y: fabricCanvas.height! / 2
+      };
+      
+      addText(center);
+      
+      toast({
+        title: "Text added",
+        description: "Click on the text to edit",
+      });
+    }
   };
 
   const addText = (pointer: { x: number, y: number }) => {
@@ -273,11 +307,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     fabricCanvas.add(text);
     fabricCanvas.setActiveObject(text);
     fabricCanvas.isDrawingMode = false;
+    
+    // Set to select mode after adding text
+    setTool("select");
+    
+    // Enter editing mode after adding the text
     text.enterEditing();
     fabricCanvas.renderAll();
-    
-    // Switch to select mode after adding text
-    setTool("select");
   };
   
   // Function to add text directly on canvas click when text tool is active

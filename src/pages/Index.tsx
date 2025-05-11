@@ -1,12 +1,15 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import ImageUploader from "@/components/ImageUploader";
+import PromptInput from "@/components/PromptInput";
+import ResultDisplay from "@/components/ResultDisplay";
+import { generateImage } from "@/services/imageService";
 import Navigation from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
-import { Beaker, Flask } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -110,15 +113,11 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-16 max-w-5xl flex-grow flex flex-col items-center justify-center">
         <div className="text-center mb-12">
-          <div className="flex justify-center mb-4">
-            <Flask className="h-16 w-16 text-blue-600" />
-          </div>
           <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
-            Sci-icons
+            AI Image Generator
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Create accurate and beautiful scientific icons and illustrations for your research, 
-            presentations, and educational materials with our AI-powered scientific visualization tool.
+            Transform your ideas into stunning images with our AI-powered image generator. Create art, illustrations, and more in seconds.
           </p>
         </div>
 
@@ -128,7 +127,7 @@ const Index = () => {
             size="lg" 
             className="w-full text-lg py-6"
           >
-            {user ? 'Start Creating Scientific Icons' : 'Login to Create Scientific Icons'}
+            {user ? 'Start Generating Images' : 'Login to Generate Images'}
           </Button>
         </div>
       </div>

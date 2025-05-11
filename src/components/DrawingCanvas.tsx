@@ -245,81 +245,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
   const handleTextTool = () => {
     setTool("text");
-    
-    // When the text tool is selected, immediately add a text box to the canvas
-    if (fabricCanvas) {
-      const text = new fabric.IText("Double-click to edit", {
-        left: fabricCanvas.width! / 2,
-        top: fabricCanvas.height! / 2,
-        fontFamily: 'Arial',
-        fontSize: 20,
-        fill: color,
-        textAlign: 'center',
-        originX: 'center',
-        originY: 'center',
-        selectable: true,
-        editable: true
-      });
-      
-      fabricCanvas.add(text);
-      fabricCanvas.setActiveObject(text);
-      fabricCanvas.isDrawingMode = false;
-      text.enterEditing();
-      fabricCanvas.renderAll();
-      
-      toast({
-        title: "Text added",
-        description: "Double-click on text to edit. Click and drag to move or rotate.",
-      });
-    }
+    toast({
+      title: "Text tool activated",
+      description: "Click anywhere on the canvas to add text",
+    });
   };
 
-  const addText = () => {
-    if (!fabricCanvas || !textInput.trim()) return;
+  const addText = (pointer: { x: number, y: number }) => {
+    if (!fabricCanvas) return;
     
-    const text = new fabric.IText(textInput.trim(), {
-      left: fabricCanvas.width! / 2,
-      top: fabricCanvas.height! / 2,
-      fontFamily: 'Arial',
-      fontSize: 20,
-      fill: color,
-      textAlign: 'center',
-      originX: 'center',
-      originY: 'center',
-      selectable: true,
-      editable: true
-    });
-    
-    fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
-    fabricCanvas.isDrawingMode = false;
-    text.enterEditing();
-    fabricCanvas.renderAll();
-    
-    // Clear the text input
-    setTextInput("");
-    
-    // Switch to select mode after adding text
-    setTool("select");
-    
-    toast({
-      title: "Text added",
-      description: "Text has been added to the canvas. Double-click to edit.",
-    });
-  };
-  
-  // Function to add text directly on canvas click when text tool is active
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (tool !== "text" || !fabricCanvas) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Calculate the position on the canvas accounting for any scaling
-    const pointer = fabricCanvas.getPointer(e.nativeEvent);
-    
-    const text = new fabric.IText("Double-click to edit", {
+    const text = new fabric.IText("Click to edit text", {
       left: pointer.x,
       top: pointer.y,
       fontFamily: 'Arial',
@@ -337,6 +272,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Switch to select mode after adding text
     setTool("select");
+  };
+  
+  // Function to add text directly on canvas click when text tool is active
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (tool !== "text" || !fabricCanvas) return;
+    
+    // Calculate the position on the canvas accounting for any scaling
+    const pointer = fabricCanvas.getPointer(e.nativeEvent);
+    addText(pointer);
   };
 
   // Make text rotatable by adding controls
@@ -366,7 +310,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           size="sm" 
           onClick={handleSelectTool}
           className="h-7 px-2"
-          title="Select"
+          title="Select/Move"
         >
           <Move className="h-3.5 w-3.5" />
         </Button>
@@ -458,7 +402,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       </div>
       
       {tool === "text" && (
-        <p className="text-xs text-muted-foreground mt-0 mb-1">Click on canvas to add text directly</p>
+        <p className="text-xs text-muted-foreground mt-0 mb-1">Click on canvas to add text</p>
       )}
       
       <div className="border rounded-md overflow-hidden bg-white">

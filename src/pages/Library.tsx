@@ -181,8 +181,8 @@ const Library = () => {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+            {Array.from({ length: 12 }).map((_, index) => (
               <Card key={index} className="overflow-hidden">
                 <div className="aspect-square bg-muted animate-pulse" />
               </Card>
@@ -199,7 +199,7 @@ const Library = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {images.map((image) => (
                 <Card key={image.id} className="overflow-hidden group">
                   <div className="relative aspect-square">
@@ -208,24 +208,24 @@ const Library = () => {
                       alt={image.title || "Generated image"} 
                       className="object-cover w-full h-full" 
                     />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-9 w-9 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40" 
+                        className="h-7 w-7 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40" 
                         onClick={() => handleDownload(image.image_url, image.title)}
                       >
-                        <Download className="h-4 w-4 text-white" />
+                        <Download className="h-3 w-3 text-white" />
                         <span className="sr-only">Download</span>
                       </Button>
                       
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-9 w-9 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40" 
+                        className="h-7 w-7 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40" 
                         onClick={() => handleEdit(image.image_url, image.prompt)}
                       >
-                        <Edit className="h-4 w-4 text-white" />
+                        <Edit className="h-3 w-3 text-white" />
                         <span className="sr-only">Edit</span>
                       </Button>
                       
@@ -234,9 +234,9 @@ const Library = () => {
                           <Button 
                             variant="outline" 
                             size="icon" 
-                            className="h-9 w-9 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40 hover:border-red-400 hover:text-red-400"
+                            className="h-7 w-7 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/40 hover:border-red-400 hover:text-red-400"
                           >
-                            <Trash2 className="h-4 w-4 text-white" />
+                            <Trash2 className="h-3 w-3 text-white" />
                             <span className="sr-only">Delete</span>
                           </Button>
                         </AlertDialogTrigger>
@@ -260,9 +260,9 @@ const Library = () => {
                       </AlertDialog>
                     </div>
                   </div>
-                  <CardFooter className="p-3">
-                    <p className="text-sm truncate w-full" title={image.title || image.prompt}>
-                      {image.title || (image.prompt?.substring(0, 30) + "...") || "Untitled"}
+                  <CardFooter className="p-2">
+                    <p className="text-xs truncate w-full" title={image.title || image.prompt}>
+                      {image.title || (image.prompt?.substring(0, 20) + "...") || "Untitled"}
                     </p>
                   </CardFooter>
                 </Card>

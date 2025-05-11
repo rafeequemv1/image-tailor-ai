@@ -40,6 +40,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-medium">Upload Images (Optional)</h3>
+        <p className="text-xs text-muted-foreground">You can upload multiple images</p>
+      </div>
       <div className="flex items-center justify-center w-full">
         <label
           htmlFor="image-upload"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,15 +39,6 @@ const Index = () => {
         variant: "destructive",
       });
       setActiveTab("settings");
-      return;
-    }
-
-    if (images.length === 0) {
-      toast({
-        title: "No Images",
-        description: "Please upload at least one image.",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -105,7 +95,7 @@ const Index = () => {
           AI Image Generator
         </h1>
         <p className="text-muted-foreground mt-2">
-          Transform your images using OpenAI's powerful GPT-image-1 model
+          Transform your images or generate new ones with OpenAI's powerful models
         </p>
       </div>
 
@@ -122,18 +112,18 @@ const Index = () => {
                 <CardTitle>Input</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <ImageUploader onImageUpload={handleImageUpload} />
                 <PromptInput 
                   prompt={prompt} 
                   setPrompt={setPrompt} 
                   makeTransparent={makeTransparent}
                   setMakeTransparent={setMakeTransparent}
                 />
+                <ImageUploader onImageUpload={handleImageUpload} />
               </CardContent>
               <CardFooter>
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isLoading || images.length === 0 || !prompt} 
+                  disabled={isLoading || !prompt} 
                   className="w-full"
                 >
                   {isLoading ? "Generating..." : "Generate Image"}
@@ -165,7 +155,7 @@ const Index = () => {
       </Tabs>
 
       <footer className="mt-16 text-center text-sm text-muted-foreground">
-        <p>Powered by OpenAI's GPT-Image-1 model</p>
+        <p>Powered by OpenAI's GPT-Image-1 and DALL-E 3 models</p>
       </footer>
     </div>
   );

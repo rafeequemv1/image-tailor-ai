@@ -24,18 +24,18 @@ const PromptInput: React.FC<PromptInputProps> = ({
           htmlFor="prompt"
           className="block text-sm font-medium text-foreground"
         >
-          Prompt
+          Prompt (Required)
         </label>
         <div>
           <Input
             id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe how to transform the image(s)..."
+            placeholder="Describe what you want to generate or how to transform uploaded images..."
             className="w-full"
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            Be specific about the changes you want to see
+            You can generate images with just a prompt, or transform uploaded images
           </p>
         </div>
       </div>

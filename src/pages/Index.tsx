@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,20 +56,12 @@ const Index = () => {
     setResult(null);
 
     try {
-      // Modify prompt based on selected style
-      let finalPrompt = prompt;
-      
-      if (style === "2d-biorender") {
-        finalPrompt = `${prompt} in 2D biorender style, scientific illustration, cell biology visualization`;
-      } else if (style === "3d-biorender") {
-        finalPrompt = `${prompt} in 3D biorender style, detailed 3D scientific model, molecular visualization`;
-      }
-
       const response = await generateImage({
         apiKey,
         images,
-        prompt: finalPrompt,
+        prompt,
         makeTransparent,
+        style,
       });
 
       if (!response.success) {
@@ -168,7 +159,7 @@ const Index = () => {
       </Tabs>
 
       <footer className="mt-16 text-center text-sm text-muted-foreground">
-        <p>Powered by OpenAI's GPT-Image-1 and DALL-E 3 models</p>
+        <p>Powered by OpenAI's GPT-Image-1 model</p>
       </footer>
     </div>
   );

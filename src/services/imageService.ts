@@ -4,6 +4,7 @@ interface GenerateImageRequest {
   images: File[];
   prompt: string;
   makeTransparent?: boolean;
+  style?: string;
 }
 
 interface GenerateImageResponse {
@@ -20,6 +21,7 @@ export async function generateImage({
   images,
   prompt,
   makeTransparent = false,
+  style = "none",
 }: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
     if (!apiKey) {
@@ -30,9 +32,16 @@ export async function generateImage({
     }
 
     // If transparency is requested, add it to the prompt
-    const finalPrompt = makeTransparent 
+    let finalPrompt = makeTransparent 
       ? `${prompt} with transparent background` 
       : prompt;
+    
+    // Apply style presets if selected
+    if (style === "2d-biorender") {
+      finalPrompt = `${finalPrompt} in 2D biorender style, scientific illustration, cell biology visualization`;
+    } else if (style === "3d-biorender") {
+      finalPrompt = `${finalPrompt} in 3D biorender style, detailed 3D scientific model, molecular visualization`;
+    }
     
     // Determine whether to use text-to-image or image-to-image endpoint
     const hasImages = images.length > 0;
@@ -80,7 +89,7 @@ export async function generateImage({
     } else {
       // Text-to-image generation uses JSON
       const requestBody = {
-        model: "dall-e-3",
+        model: "gpt-image-1",
         prompt: finalPrompt,
         n: 1,
         size: "1024x1024",

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,21 +8,85 @@ import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
 import { generateImage } from "@/services/imageService";
 import Footer from "@/components/Footer";
+import Navigation from "@/components/Navigation";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { Textarea } from "@/components/ui/textarea";
 
 const App = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   // Updated API key with the provided key
   const apiKey = "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";
   const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
+  const [editPrompt, setEditPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
   const [style, setStyle] = useState<string>("none");
   const [quality, setQuality] = useState<string>("standard");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+      
+      setUser(session.user);
+    };
+    
+    checkUser();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        navigate("/login");
+      } else if (session) {
+        setUser(session.user);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleImageUpload = (files: File[]) => {
     setImages(files);
+  };
+  
+  const handleEditPromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditPrompt(e.target.value);
+  };
+
+  const handleGenerateWithEdit = async () => {
+    if (!editPrompt) {
+      toast({
+        title: "No Edit Prompt",
+        description: "Please enter a prompt to guide the image editing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Implementation for handling the edit prompt would go here
+      // For now, we'll just update the prompt and regenerate
+      setPrompt(editPrompt);
+      handleGenerate();
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Edit Failed",
+        description: "Failed to apply the edit to the image.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -73,8 +138,12 @@ const App = () => {
     }
   };
 
+  if (!user) return null;
+
   return (
     <div className="flex flex-col min-h-screen">
+      <Navigation />
+      
       <div className="container mx-auto px-4 py-8 max-w-5xl flex-grow">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
@@ -118,8 +187,30 @@ const App = () => {
             <CardHeader>
               <CardTitle>Result</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <ResultDisplay result={result} isLoading={isLoading} />
+              
+              {result && (
+                <div className="space-y-2">
+                  <label htmlFor="editPrompt" className="block text-sm font-medium text-gray-700">
+                    Edit Image
+                  </label>
+                  <Textarea
+                    id="editPrompt"
+                    placeholder="Describe how you want to edit the generated image..."
+                    value={editPrompt}
+                    onChange={handleEditPromptChange}
+                    className="w-full h-24"
+                  />
+                  <Button 
+                    onClick={handleGenerateWithEdit}
+                    disabled={isLoading || !editPrompt}
+                    className="w-full"
+                  >
+                    {isLoading ? "Applying Edit..." : "Apply Edit"}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

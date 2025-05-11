@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,10 +7,13 @@ import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
 import { generateImage } from "@/services/imageService";
 import Navigation from "@/components/Navigation";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   // Updated API key with the provided key
   const apiKey = "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";
   const [images, setImages] = useState<File[]>([]);
@@ -21,6 +23,28 @@ const Index = () => {
   const [quality, setQuality] = useState<string>("standard");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+      }
+    };
+    
+    checkUser();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        setUser(session.user);
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleImageUpload = (files: File[]) => {
     setImages(files);
@@ -75,63 +99,39 @@ const Index = () => {
     }
   };
 
+  const handleStartGenerating = () => {
+    if (user) {
+      navigate('/app');
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8 max-w-5xl flex-grow">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+      <div className="container mx-auto px-4 py-16 max-w-5xl flex-grow flex flex-col items-center justify-center">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
             AI Image Generator
           </h1>
-          <p className="text-muted-foreground mt-2">
-            Transform your images or generate new ones with OpenAI's powerful models
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Transform your ideas into stunning images with our AI-powered image generator. Create art, illustrations, and more in seconds.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Input</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <PromptInput 
-                prompt={prompt} 
-                setPrompt={setPrompt} 
-                makeTransparent={makeTransparent}
-                setMakeTransparent={setMakeTransparent}
-                style={style}
-                setStyle={setStyle}
-                quality={quality}
-                setQuality={setQuality}
-              />
-              <ImageUploader onImageUpload={handleImageUpload} />
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleGenerate} 
-                disabled={isLoading || !prompt} 
-                className="w-full"
-              >
-                {isLoading ? "Generating..." : "Generate Image"}
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Result</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResultDisplay result={result} isLoading={isLoading} />
-            </CardContent>
-          </Card>
+        <div className="w-full max-w-md">
+          <Button 
+            onClick={handleStartGenerating}
+            size="lg" 
+            className="w-full text-lg py-6"
+          >
+            {user ? 'Start Generating Images' : 'Login to Generate Images'}
+          </Button>
         </div>
       </div>
-
-      <footer className="mt-16 text-center text-sm text-muted-foreground py-4">
-        <p>Powered by OpenAI's GPT-Image-1 model</p>
-      </footer>
+      <Footer />
     </div>
   );
 };

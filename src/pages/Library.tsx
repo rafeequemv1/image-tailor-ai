@@ -170,8 +170,8 @@ const Library = () => {
   return (
     <div className="flex flex-col">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center gap-2">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center gap-2">
             <Image className="h-8 w-8 text-blue-600" />
             Your Image Library
           </h1>
@@ -183,25 +183,25 @@ const Library = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, index) => (
-              <Card key={index} className="overflow-hidden">
+              <Card key={index} className="overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="aspect-square bg-muted animate-pulse" />
               </Card>
             ))}
           </div>
         ) : images.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed rounded-lg bg-muted/30 border-muted-foreground/25">
+          <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed rounded-xl bg-white shadow-sm border-muted-foreground/25">
             <Image className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-medium mb-2">Your library is empty</h3>
             <p className="text-muted-foreground mb-6">
               Generate some images to see them here
             </p>
-            <Button onClick={() => navigate("/app")}>Generate Images</Button>
+            <Button onClick={() => navigate("/app")} className="bg-blue-600 hover:bg-blue-700">Generate Images</Button>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {images.map((image) => (
-                <Card key={image.id} className="overflow-hidden group">
+                <Card key={image.id} className="overflow-hidden group rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                   <div className="relative aspect-square">
                     <img 
                       src={image.image_url} 
@@ -260,7 +260,7 @@ const Library = () => {
                       </AlertDialog>
                     </div>
                   </div>
-                  <CardFooter className="p-3">
+                  <CardFooter className="p-3 bg-white">
                     <p className="text-sm truncate w-full" title={image.title || image.prompt}>
                       {image.title || (image.prompt?.substring(0, 30) + "...") || "Untitled"}
                     </p>

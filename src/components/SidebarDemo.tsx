@@ -1,8 +1,8 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, UserCog, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, UserCog, Settings, LogOut, Image as ImageIcon, Home } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   Sidebar,
@@ -12,16 +12,25 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
   useSidebar
 } from "./ui/sidebar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 
-const SidebarLink = ({ link }: { link: { label: string; href: string; icon: React.ReactNode } }) => {
+const SidebarLink = ({ link }: { link: { label: string; href: string; icon: React.ReactNode; onClick?: () => void } }) => {
   const { state } = useSidebar();
+  
+  if (link.onClick) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton onClick={link.onClick} tooltip={link.label}>
+          {link.icon}
+          <span>{link.label}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
   
   return (
     <SidebarMenuItem>
@@ -58,17 +67,17 @@ export function SidebarDemo() {
   
   const links = [
     {
-      label: "Dashboard",
+      label: "Home",
       href: "/app",
       icon: (
-        <LayoutDashboard className="h-5 w-5" />
+        <Home className="h-5 w-5" />
       ),
     },
     {
       label: "Library",
       href: "/library",
       icon: (
-        <Settings className="h-5 w-5" />
+        <ImageIcon className="h-5 w-5" />
       ),
     },
     {
@@ -121,7 +130,6 @@ export function SidebarDemo() {
     <Sidebar>
       <SidebarHeader>
         <div className="px-3 py-2">
-          {/* Use conditional rendering based on sidebar state */}
           <div className="sidebar-logo">
             <Logo />
           </div>
@@ -129,19 +137,9 @@ export function SidebarDemo() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {links.map((link, idx) => {
-            if (link.onClick) {
-              return (
-                <SidebarMenuItem key={idx}>
-                  <SidebarMenuButton onClick={link.onClick} tooltip={link.label}>
-                    {link.icon}
-                    <span>{link.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            }
-            return <SidebarLink key={idx} link={link} />;
-          })}
+          {links.map((link, idx) => (
+            <SidebarLink key={idx} link={link} />
+          ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>

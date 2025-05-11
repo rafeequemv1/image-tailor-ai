@@ -1,30 +1,23 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface ImageUploaderProps {
   onImageUpload: (files: File[]) => void;
-  images: File[];
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, images }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
+  const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
 
-  // Update previews when images prop changes
-  useEffect(() => {
-    // Clear previews if images array is empty
-    if (images.length === 0) {
-      setPreviews([]);
-      return;
-    }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setFiles((prev) => [...prev, ...newFiles]);
 
-    // Only generate new previews if they don't already exist
-    if (previews.length !== images.length) {
-      setPreviews([]);
-      
       // Create and store image previews
-      images.forEach((file) => {
+      newFiles.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
           if (e.target?.result) {
@@ -33,21 +26,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, images }) 
         };
         reader.readAsDataURL(file);
       });
-    }
-  }, [images]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      const updatedFiles = [...images, ...newFiles];
-      
-      onImageUpload(updatedFiles);
+      // Pass the files to the parent component
+      onImageUpload([...files, ...newFiles]);
     }
   };
 
   const removeImage = (index: number) => {
-    const updatedFiles = images.filter((_, i) => i !== index);
-    onImageUpload(updatedFiles);
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+    onImageUpload(files.filter((_, i) => i !== index));
   };
 
   return (

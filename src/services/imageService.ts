@@ -1,96 +1,120 @@
 
-interface ImageGenerationParams {
+interface GenerateImageRequest {
+  apiKey: string;
+  images: File[];
   prompt: string;
   makeTransparent?: boolean;
-  images?: File[];
-  maskImage?: File | null;
-  quality?: string;
-  size?: string;
 }
 
-interface ImageGenerationResponse {
+interface GenerateImageResponse {
   success: boolean;
   data?: {
-    url?: string;
+    url: string;
     b64_json?: string;
   };
   error?: string;
 }
 
-// Hardcoded API key
-const API_KEY = "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";
-
-export const generateImage = async ({
+export async function generateImage({
+  apiKey,
+  images,
   prompt,
   makeTransparent = false,
-  images = [],
-  maskImage = null,
-  quality = "high",
-  size = "square"
-}: ImageGenerationParams): Promise<ImageGenerationResponse> => {
+}: GenerateImageRequest): Promise<GenerateImageResponse> {
   try {
-    // Process prompt to add transparency request if needed
-    const finalPrompt = makeTransparent
-      ? `${prompt}. Please ensure the background is completely transparent.`
+    if (!apiKey) {
+      return {
+        success: false,
+        error: "No API key provided",
+      };
+    }
+
+    // If transparency is requested, add it to the prompt
+    const finalPrompt = makeTransparent 
+      ? `${prompt} with transparent background` 
       : prompt;
-
-    // Configure size based on selection
-    let width = 1024;
-    let height = 1024;
     
-    if (size === "portrait") {
-      width = 1024;
-      height = 1792;
-    } else if (size === "landscape") {
-      width = 1792;
-      height = 1024;
-    }
+    // Determine which endpoint to use based on whether images were provided
+    let endpoint = "https://api.openai.com/v1/images/generations"; // Default for text-to-image
     
-    // Prepare API request
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
-    };
+    // If there are uploaded images, use the edits endpoint with FormData
+    if (images.length > 0) {
+      const formData = new FormData();
+      
+      // Always use the latest model: gpt-image-1
+      formData.append("model", "gpt-image-1");
+      
+      // Switch to image edit endpoint when images are provided
+      endpoint = "https://api.openai.com/v1/images/edits";
+      
+      // Append each image
+      images.forEach(image => {
+        formData.append("image", image);
+      });
+      
+      formData.append("prompt", finalPrompt);
+      formData.append("n", "1");
+      formData.append("size", "1024x1024");
 
-    // Basic image generation request
-    const requestBody: any = {
-      model: "gpt-image-1",
-      prompt: finalPrompt,
-      n: 1,
-      size: `${width}x${height}`,
-      quality: quality // "high", "medium", or "low" for gpt-image-1
-    };
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: formData,
+      });
 
-    // Add response format for transparent images
-    if (makeTransparent) {
-      requestBody.response_format = "b64_json";
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("OpenAI API error:", data);
+        return {
+          success: false,
+          error: data.error?.message || "Failed to generate image",
+        };
+      }
+
+      return {
+        success: true,
+        data: data.data[0],
+      };
+    } 
+    // If no images are provided, use the generations endpoint with JSON payload
+    else {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-image-1",
+          prompt: finalPrompt,
+          n: 1,
+          size: "1024x1024",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("OpenAI API error:", data);
+        return {
+          success: false,
+          error: data.error?.message || "Failed to generate image",
+        };
+      }
+
+      return {
+        success: true,
+        data: data.data[0],
+      };
     }
-    
-    // OpenAI API endpoint
-    const endpoint = "https://api.openai.com/v1/images/generations";
-
-    // Make the API request
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || "API request failed");
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      data: data.data[0],
-    };
   } catch (error) {
-    console.error("Image generation failed:", error);
+    console.error("Error generating image:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
-};
+}

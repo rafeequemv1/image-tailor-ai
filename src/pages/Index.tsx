@@ -1,30 +1,49 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Wand2 } from "lucide-react";
+import ImageUploader from "@/components/ImageUploader";
+import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
+import APIKeyInput from "@/components/APIKeyInput";
 import { generateImage } from "@/services/imageService";
 
 const Index = () => {
   const { toast } = useToast();
+  const [apiKey, setApiKey] = useState<string>("");
+  const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
-  const [imageQuality, setImageQuality] = useState<string>("high");
-  const [imageSize, setImageSize] = useState<string>("square");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [lastPrompt, setLastPrompt] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<string>("generate");
 
-  const handleGenerate = async (updatePrompt?: string) => {
-    const currentPrompt = updatePrompt || prompt;
-    
-    if (!currentPrompt) {
+  // Load API key from local storage
+  useEffect(() => {
+    const savedKey = localStorage.getItem("openai_api_key");
+    if (savedKey) {
+      setApiKey(savedKey);
+    }
+  }, []);
+
+  const handleImageUpload = (files: File[]) => {
+    setImages(files);
+  };
+
+  const handleGenerate = async () => {
+    if (!apiKey) {
+      toast({
+        title: "Missing API Key",
+        description: "Please enter your OpenAI API key in the settings tab.",
+        variant: "destructive",
+      });
+      setActiveTab("settings");
+      return;
+    }
+
+    if (!prompt) {
       toast({
         title: "No Prompt",
         description: "Please enter a prompt to guide the image generation.",
@@ -34,24 +53,14 @@ const Index = () => {
     }
 
     setIsLoading(true);
-    
-    // If this is an update to an existing image, we'll use the new prompt
-    // otherwise we'll use the prompt from the input field
-    const finalPrompt = updatePrompt 
-      ? `${lastPrompt}. Update it by: ${updatePrompt}` 
-      : currentPrompt;
-
-    // Save this prompt as the last used prompt for potential future updates
-    if (!updatePrompt) {
-      setLastPrompt(currentPrompt);
-    }
+    setResult(null);
 
     try {
       const response = await generateImage({
-        prompt: finalPrompt,
+        apiKey,
+        images,
+        prompt,
         makeTransparent,
-        quality: imageQuality,
-        size: imageSize,
       });
 
       if (!response.success) {
@@ -68,11 +77,9 @@ const Index = () => {
       } else {
         throw new Error("No image data received");
       }
-
-      // Clear the prompt input if this was an initial generation (not an update)
-      if (!updatePrompt) {
-        setPrompt("");
-      }
+      
+      // Clear uploaded images after successful generation to prevent caching issues
+      setImages([]);
     } catch (error) {
       console.error(error);
       toast({
@@ -85,121 +92,75 @@ const Index = () => {
     }
   };
 
-  const handleUpdateImage = (updatePrompt: string) => {
-    handleGenerate(updatePrompt);
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="text-center mb-8">
-        <div className="flex items-center justify-center space-x-2">
-          <img src="/lovable-uploads/9a3cd3bf-f8a7-4414-b9c5-3e4b3017882d.png" alt="Sci-Icons Logo" className="h-8 w-8" />
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            Sci-Icons
-          </h1>
-        </div>
+        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+          AI Image Generator
+        </h1>
         <p className="text-muted-foreground mt-2">
-          Generate scientific icons with AI
+          Transform your images or generate new ones with OpenAI's powerful models
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="overflow-hidden">
-          <CardContent className="p-6 space-y-6">
-            <div>
-              <label htmlFor="prompt" className="block text-sm font-medium mb-2">
-                Image Description
-              </label>
-              <Textarea
-                id="prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the image you want to generate. Be specific about style, colors, subjects, and composition."
-                className="w-full h-32 resize-none"
-              />
-            </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-2 mb-6">
+          <TabsTrigger value="generate">Generate</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="generate">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Input</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <PromptInput 
+                  prompt={prompt} 
+                  setPrompt={setPrompt} 
+                  makeTransparent={makeTransparent}
+                  setMakeTransparent={setMakeTransparent}
+                />
+                <ImageUploader onImageUpload={handleImageUpload} />
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={isLoading || !prompt} 
+                  className="w-full"
+                >
+                  {isLoading ? "Generating..." : "Generate Image"}
+                </Button>
+              </CardFooter>
+            </Card>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="image-quality" className="block text-sm font-medium mb-2">
-                  Image Quality
-                </label>
-                <Select value={imageQuality} onValueChange={setImageQuality}>
-                  <SelectTrigger id="image-quality">
-                    <SelectValue placeholder="Select quality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Result</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResultDisplay result={result} isLoading={isLoading} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>API Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <APIKeyInput apiKey={apiKey} setApiKey={setApiKey} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
-              <div>
-                <label htmlFor="image-size" className="block text-sm font-medium mb-2">
-                  Image Size
-                </label>
-                <Select value={imageSize} onValueChange={setImageSize}>
-                  <SelectTrigger id="image-size">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="square">Square (1024×1024)</SelectItem>
-                    <SelectItem value="portrait">Portrait (1024×1792)</SelectItem>
-                    <SelectItem value="landscape">Landscape (1792×1024)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="transparency-mode"
-                checked={makeTransparent}
-                onCheckedChange={setMakeTransparent}
-              />
-              <Label htmlFor="transparency-mode">Transparent Background</Label>
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">
-                For best results, be detailed in your description including style, mood, lighting, and composition.
-                <br />
-                Examples: "A serene mountain landscape at sunset with pink and purple hues", "A futuristic
-                cyberpunk city with neon lights"
-              </p>
-              <p className="text-xs text-amber-500">
-                Note: The system will automatically retry if rate limits are encountered. If errors persist, please wait
-                a minute before trying again.
-              </p>
-            </div>
-
-            <Button 
-              onClick={() => handleGenerate()}
-              disabled={isLoading || !prompt} 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              <Wand2 className="mr-2 h-4 w-4" />
-              {isLoading ? "Generating..." : "Generate Image"}
-            </Button>
-            
-            <p className="text-xs text-center text-muted-foreground">
-              Note: If generation fails due to rate limits, the system will automatically retry up to 3 times.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <ResultDisplay 
-              result={result} 
-              isLoading={isLoading} 
-              onUpdateImage={handleUpdateImage}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <footer className="mt-16 text-center text-sm text-muted-foreground">
+        <p>Powered by OpenAI's GPT-Image-1 and DALL-E 3 models</p>
+      </footer>
     </div>
   );
 };

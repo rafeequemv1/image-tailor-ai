@@ -103,23 +103,29 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
         </div>
       </div>
       
-      {filePreviewUrls.length > 0 && (
+      {filePreviewUrls.length > 0 && files.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm font-medium">Selected images:</p>
           <div className="grid grid-cols-2 gap-2">
-            {filePreviewUrls.map((url, index) => (
-              <div key={index} className="relative overflow-hidden rounded-md border border-muted">
-                <img 
-                  src={url} 
-                  alt={`Selected image ${index + 1}`} 
-                  className="w-full h-36 object-cover"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
-                  <p className="text-xs text-white truncate">{files[index].name}</p>
-                  <p className="text-xs text-white/80">{Math.round(files[index].size / 1024)} KB</p>
+            {filePreviewUrls.map((url, index) => {
+              // Ensure the file exists before trying to access its properties
+              const file = files[index];
+              if (!file) return null;
+              
+              return (
+                <div key={index} className="relative overflow-hidden rounded-md border border-muted">
+                  <img 
+                    src={url} 
+                    alt={`Selected image ${index + 1}`} 
+                    className="w-full h-36 object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+                    <p className="text-xs text-white truncate">{file.name}</p>
+                    <p className="text-xs text-white/80">{Math.round(file.size / 1024)} KB</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -1,8 +1,10 @@
+
 import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, PencilLine, Undo2, RotateCcw, Upload, Trash2 } from "lucide-react";
+import { Eraser, PencilLine, Undo2, RotateCcw, Upload, Trash2, Move, Scale, Layers } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
+import { fabric } from 'fabric';
 
 interface DrawingCanvasProps {
   onSave: (file: File) => void;
@@ -18,176 +20,97 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
   const [color, setColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(5);
-  const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
-  const [tool, setTool] = useState<"pencil" | "eraser">("pencil");
-  const [history, setHistory] = useState<ImageData[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null);
-  
-  // Initialize canvas context
+  const [tool, setTool] = useState<"select" | "pencil" | "eraser">("select");
+  const [uploadedImages, setUploadedImages] = useState<fabric.Image[]>([]);
+
+  // Initialize fabric canvas
   useEffect(() => {
     if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const canvas = new fabric.Canvas(canvasRef.current, {
+        width: width,
+        height: height,
+        backgroundColor: '#FFFFFF'
+      });
       
-      if (ctx) {
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = color;
-        ctx.lineWidth = brushSize;
-        setContext(ctx);
-        
-        // Create blank canvas with white background
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Save initial blank canvas
-        const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        setHistory([initialState]);
-        setHistoryIndex(0);
-      }
+      // Setup free drawing brush
+      canvas.freeDrawingBrush.color = color;
+      canvas.freeDrawingBrush.width = brushSize;
+      
+      // Set the initial interaction mode
+      canvas.isDrawingMode = false;
+      
+      setFabricCanvas(canvas);
+      
+      return () => {
+        canvas.dispose();
+      };
     }
   }, []);
-  
-  // Update context when color or brush size changes
-  useEffect(() => {
-    if (context) {
-      context.strokeStyle = tool === "eraser" ? "#FFFFFF" : color;
-      context.lineWidth = brushSize;
-    }
-  }, [color, brushSize, context, tool]);
 
-  // Draw the background image when it changes
+  // Update drawing brush when color or size changes
   useEffect(() => {
-    if (backgroundImage && canvasRef.current && context) {
-      // Clear canvas
-      context.fillStyle = '#FFFFFF';
-      context.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      
-      // Calculate dimensions to maintain aspect ratio
-      const canvas = canvasRef.current;
-      const imgRatio = backgroundImage.width / backgroundImage.height;
-      const canvasRatio = canvas.width / canvas.height;
-      
-      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-      
-      if (imgRatio > canvasRatio) {
-        // Image is wider than canvas (proportionally)
-        drawWidth = canvas.width;
-        drawHeight = canvas.width / imgRatio;
-        offsetY = (canvas.height - drawHeight) / 2;
+    if (fabricCanvas) {
+      if (tool === "eraser") {
+        // For eraser, we set color to white (or the canvas background color)
+        fabricCanvas.freeDrawingBrush.color = "#FFFFFF";
       } else {
-        // Image is taller than canvas (proportionally)
-        drawHeight = canvas.height;
-        drawWidth = canvas.height * imgRatio;
-        offsetX = (canvas.width - drawWidth) / 2;
+        fabricCanvas.freeDrawingBrush.color = color;
       }
-      
-      // Draw the image centered
-      context.drawImage(
-        backgroundImage,
-        offsetX,
-        offsetY,
-        drawWidth,
-        drawHeight
-      );
-      
-      // Save this state to history
-      const newState = context.getImageData(0, 0, canvas.width, canvas.height);
-      setHistory([...history.slice(0, historyIndex + 1), newState]);
-      setHistoryIndex(historyIndex + 1);
+      fabricCanvas.freeDrawingBrush.width = brushSize;
     }
-  }, [backgroundImage]);
-
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || !context) return;
+  }, [color, brushSize, fabricCanvas, tool]);
+  
+  // Update canvas mode based on the selected tool
+  useEffect(() => {
+    if (!fabricCanvas) return;
     
-    setIsDrawing(true);
-    
-    // Get position
-    let x, y;
-    if ('touches' in e) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      x = e.touches[0].clientX - rect.left;
-      y = e.touches[0].clientY - rect.top;
-    } else {
-      x = e.nativeEvent.offsetX;
-      y = e.nativeEvent.offsetY;
+    if (tool === "select") {
+      fabricCanvas.isDrawingMode = false;
+      // Make all objects selectable and movable
+      fabricCanvas.forEachObject(obj => {
+        obj.selectable = true;
+        obj.evented = true;
+      });
+    } else if (tool === "pencil") {
+      fabricCanvas.isDrawingMode = true;
+      fabricCanvas.freeDrawingBrush.color = color;
+    } else if (tool === "eraser") {
+      fabricCanvas.isDrawingMode = true;
+      fabricCanvas.freeDrawingBrush.color = "#FFFFFF"; // White color to act as eraser
     }
     
-    context.beginPath();
-    context.moveTo(x, y);
-  };
+    fabricCanvas.renderAll();
+  }, [tool, fabricCanvas, color]);
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !canvasRef.current || !context) return;
+  const handleClear = () => {
+    if (!fabricCanvas) return;
     
-    let x, y;
-    if ('touches' in e) {
-      e.preventDefault(); // Prevent scrolling when drawing
-      const rect = canvasRef.current.getBoundingClientRect();
-      x = e.touches[0].clientX - rect.left;
-      y = e.touches[0].clientY - rect.top;
-    } else {
-      x = e.nativeEvent.offsetX;
-      y = e.nativeEvent.offsetY;
-    }
+    fabricCanvas.clear();
+    fabricCanvas.setBackgroundColor('#FFFFFF', fabricCanvas.renderAll.bind(fabricCanvas));
+    setUploadedImages([]);
     
-    context.lineTo(x, y);
-    context.stroke();
-  };
-
-  const endDrawing = () => {
-    if (!isDrawing || !canvasRef.current || !context) return;
-    
-    context.closePath();
-    setIsDrawing(false);
-    
-    // Save state to history
-    const canvas = canvasRef.current;
-    const newState = context.getImageData(0, 0, canvas.width, canvas.height);
-    
-    // If we're not at the end of the history, truncate it
-    const newHistory = history.slice(0, historyIndex + 1);
-    setHistory([...newHistory, newState]);
-    setHistoryIndex(newHistory.length);
+    toast({
+      title: "Canvas cleared",
+      description: "All content has been removed from the canvas",
+    });
   };
 
   const handleUndo = () => {
-    if (historyIndex > 0 && canvasRef.current && context) {
-      const newIndex = historyIndex - 1;
-      const imageData = history[newIndex];
-      context.putImageData(imageData, 0, 0);
-      setHistoryIndex(newIndex);
-    }
-  };
-
-  const handleClear = () => {
-    if (canvasRef.current && context) {
-      context.fillStyle = '#FFFFFF';
-      context.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    if (!fabricCanvas) return;
+    
+    const objects = fabricCanvas.getObjects();
+    if (objects.length > 0) {
+      const lastObject = objects[objects.length - 1];
+      fabricCanvas.remove(lastObject);
+      fabricCanvas.renderAll();
       
-      // Save the cleared state
-      const clearedState = context.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
-      setHistory([...history, clearedState]);
-      setHistoryIndex(history.length);
-      
-      // Clear background image
-      setBackgroundImage(null);
-    }
-  };
-
-  const handleSave = () => {
-    if (canvasRef.current) {
-      canvasRef.current.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], "drawing.png", { type: "image/png" });
-          onSave(file);
-        }
-      }, "image/png");
+      // Check if the removed object was an image
+      if (lastObject instanceof fabric.Image) {
+        setUploadedImages(prev => prev.filter(img => img !== lastObject));
+      }
     }
   };
 
@@ -199,45 +122,125 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
+      const filesArray = Array.from(e.target.files);
       
-      // Basic validation
-      if (file.type.startsWith('image/')) {
-        const img = new Image();
-        img.onload = () => {
-          setBackgroundImage(img);
+      filesArray.forEach(file => {
+        // Basic validation
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target && event.target.result && fabricCanvas) {
+              // Create fabric image from the loaded file
+              fabric.Image.fromURL(event.target.result as string, (img) => {
+                // Scale image to fit within the canvas while maintaining aspect ratio
+                const maxDimension = Math.min(fabricCanvas.width!, fabricCanvas.height!) * 0.8;
+                if (img.width! > img.height!) {
+                  // Width is larger, scale based on width
+                  if (img.width! > maxDimension) {
+                    const scale = maxDimension / img.width!;
+                    img.scale(scale);
+                  }
+                } else {
+                  // Height is larger or equal, scale based on height
+                  if (img.height! > maxDimension) {
+                    const scale = maxDimension / img.height!;
+                    img.scale(scale);
+                  }
+                }
+                
+                // Position image in the center of the canvas
+                img.set({
+                  left: fabricCanvas.width! / 2 - (img.width! * img.scaleX!) / 2,
+                  top: fabricCanvas.height! / 2 - (img.height! * img.scaleY!) / 2,
+                });
+                
+                // Make the image interactive
+                img.set({
+                  selectable: tool === "select",
+                  evented: tool === "select",
+                });
+                
+                // Add image to canvas
+                fabricCanvas.add(img);
+                setUploadedImages(prev => [...prev, img]);
+                fabricCanvas.setActiveObject(img);
+                fabricCanvas.renderAll();
+                
+                toast({
+                  title: "Image added",
+                  description: "You can now draw on top of the image",
+                });
+              });
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
           toast({
-            title: "Image added",
-            description: "You can now draw on top of the image",
-          });
-        };
-        img.onerror = () => {
-          toast({
-            title: "Error",
-            description: "Failed to load the image",
+            title: "Invalid file",
+            description: "Please select an image file",
             variant: "destructive",
           });
-        };
-        img.src = URL.createObjectURL(file);
-      } else {
-        toast({
-          title: "Invalid file",
-          description: "Please select an image file",
-          variant: "destructive",
-        });
-      }
+        }
+      });
+      
+      // Reset the file input
+      e.target.value = '';
     }
   };
 
   const handleRemoveBackground = () => {
-    if (backgroundImage && canvasRef.current && context) {
-      // Keep current drawings but remove the background image
-      setBackgroundImage(null);
-      toast({
-        title: "Background removed",
-        description: "Background image has been removed",
-      });
+    if (fabricCanvas && uploadedImages.length > 0) {
+      // Remove the selected image if any
+      const activeObject = fabricCanvas.getActiveObject();
+      if (activeObject && uploadedImages.includes(activeObject as fabric.Image)) {
+        fabricCanvas.remove(activeObject);
+        setUploadedImages(prev => prev.filter(img => img !== activeObject));
+        toast({
+          title: "Image removed",
+          description: "Selected image has been removed from the canvas",
+        });
+      } else {
+        // If no image is selected, remove the last added image
+        const lastImage = uploadedImages[uploadedImages.length - 1];
+        if (lastImage) {
+          fabricCanvas.remove(lastImage);
+          setUploadedImages(prev => prev.filter(img => img !== lastImage));
+          toast({
+            title: "Image removed",
+            description: "Last added image has been removed from the canvas",
+          });
+        }
+      }
+      fabricCanvas.renderAll();
     }
+  };
+
+  const handleSave = () => {
+    if (fabricCanvas) {
+      fabricCanvas.discardActiveObject();
+      fabricCanvas.renderAll();
+      const dataURL = fabricCanvas.toDataURL({ format: 'png', quality: 1.0 });
+      
+      // Convert data URL to blob
+      fetch(dataURL)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "drawing.png", { type: "image/png" });
+          onSave(file);
+        });
+    }
+  };
+
+  const handleSelectTool = () => {
+    setTool("select");
+  };
+
+  const handlePencilTool = () => {
+    setTool("pencil");
+  };
+
+  const handleEraserTool = () => {
+    setTool("eraser");
   };
 
   return (
@@ -245,18 +248,25 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       <div className="flex flex-row justify-between items-center mb-2">
         <div className="flex space-x-2">
           <Button 
+            variant={tool === "select" ? "default" : "outline"} 
+            size="sm" 
+            onClick={handleSelectTool}
+          >
+            <Move className="h-4 w-4 mr-1" /> Select/Move
+          </Button>
+          <Button 
             variant={tool === "pencil" ? "default" : "outline"} 
             size="sm" 
-            onClick={() => setTool("pencil")}
+            onClick={handlePencilTool}
           >
-            <PencilLine className="h-4 w-4 mr-1" /> Pencil
+            <PencilLine className="h-4 w-4 mr-1" /> Draw
           </Button>
           <Button 
             variant={tool === "eraser" ? "default" : "outline"} 
             size="sm" 
-            onClick={() => setTool("eraser")}
+            onClick={handleEraserTool}
           >
-            <Eraser className="h-4 w-4 mr-1" /> Eraser
+            <Eraser className="h-4 w-4 mr-1" /> Erase
           </Button>
         </div>
         <div className="flex space-x-2">
@@ -298,11 +308,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       
       <div className="flex space-x-2">
         <Button variant="outline" size="sm" onClick={handleImageUpload} className="flex items-center">
-          <Upload className="h-4 w-4 mr-1" /> Upload Image
+          <Upload className="h-4 w-4 mr-1" /> Add Image
         </Button>
-        {backgroundImage && (
+        {uploadedImages.length > 0 && (
           <Button variant="outline" size="sm" onClick={handleRemoveBackground} className="flex items-center">
-            <Trash2 className="h-4 w-4 mr-1" /> Remove Background
+            <Trash2 className="h-4 w-4 mr-1" /> Remove Image
           </Button>
         )}
         <input 
@@ -311,28 +321,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           accept="image/*"
           onChange={handleImageChange}
           className="hidden"
+          multiple
         />
+        <span className="text-xs text-muted-foreground ml-2 self-center">
+          {uploadedImages.length > 0 ? `${uploadedImages.length} image(s) added` : ''}
+        </span>
       </div>
       
-      <div className="border rounded-md overflow-hidden">
+      <div className="border rounded-md overflow-hidden bg-white">
         <canvas
           ref={canvasRef}
-          width={width}
-          height={height}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={endDrawing}
-          onMouseLeave={endDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={endDrawing}
           style={{ 
-            backgroundColor: "white", 
-            touchAction: "none",
             width: "100%",
             height: "auto",
+            touchAction: "none",
           }}
-          className="cursor-crosshair"
+          className={`cursor-${tool === "select" ? "move" : "crosshair"}`}
         />
       </div>
       

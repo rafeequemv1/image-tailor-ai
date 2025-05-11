@@ -90,12 +90,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
         <div>
           <Button
             variant="outline"
-            className="w-full h-full border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-muted-foreground/50 transition"
+            className="w-full h-full min-h-[118px] border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-muted-foreground/50 transition"
             onClick={() => setIsDrawingModalOpen(true)}
           >
             <div className="flex flex-col items-center">
               <Pencil className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground text-center px-2">
                 Create a drawing to use as reference
               </p>
             </div>

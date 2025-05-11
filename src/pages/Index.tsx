@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ const Index = () => {
   const [images, setImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState<string>("");
   const [makeTransparent, setMakeTransparent] = useState<boolean>(false);
+  const [preset, setPreset] = useState<string>("");
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("generate");
@@ -60,6 +62,7 @@ const Index = () => {
         images,
         prompt,
         makeTransparent,
+        preset,
       });
 
       if (!response.success) {
@@ -117,6 +120,8 @@ const Index = () => {
                   setPrompt={setPrompt} 
                   makeTransparent={makeTransparent}
                   setMakeTransparent={setMakeTransparent}
+                  preset={preset}
+                  setPreset={setPreset}
                 />
                 <ImageUploader onImageUpload={handleImageUpload} />
               </CardContent>

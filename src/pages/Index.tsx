@@ -7,6 +7,8 @@ import ImageUploader from "@/components/ImageUploader";
 import PromptInput from "@/components/PromptInput";
 import ResultDisplay from "@/components/ResultDisplay";
 import { generateImage } from "@/services/imageService";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const { toast } = useToast();
@@ -74,56 +76,60 @@ const Index = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-          AI Image Generator
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Transform your images or generate new ones with OpenAI's powerful models
-        </p>
+    <div className="flex flex-col min-h-screen">
+      <Navigation />
+      
+      <div className="container mx-auto px-4 py-8 max-w-5xl flex-grow">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            AI Image Generator
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Transform your images or generate new ones with OpenAI's powerful models
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Input</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <PromptInput 
+                prompt={prompt} 
+                setPrompt={setPrompt} 
+                makeTransparent={makeTransparent}
+                setMakeTransparent={setMakeTransparent}
+                style={style}
+                setStyle={setStyle}
+                quality={quality}
+                setQuality={setQuality}
+              />
+              <ImageUploader onImageUpload={handleImageUpload} />
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleGenerate} 
+                disabled={isLoading || !prompt} 
+                className="w-full"
+              >
+                {isLoading ? "Generating..." : "Generate Image"}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Result</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResultDisplay result={result} isLoading={isLoading} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Input</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <PromptInput 
-              prompt={prompt} 
-              setPrompt={setPrompt} 
-              makeTransparent={makeTransparent}
-              setMakeTransparent={setMakeTransparent}
-              style={style}
-              setStyle={setStyle}
-              quality={quality}
-              setQuality={setQuality}
-            />
-            <ImageUploader onImageUpload={handleImageUpload} />
-          </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={handleGenerate} 
-              disabled={isLoading || !prompt} 
-              className="w-full"
-            >
-              {isLoading ? "Generating..." : "Generate Image"}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Result</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResultDisplay result={result} isLoading={isLoading} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <footer className="mt-16 text-center text-sm text-muted-foreground">
+      <footer className="mt-16 text-center text-sm text-muted-foreground py-4">
         <p>Powered by OpenAI's GPT-Image-1 model</p>
       </footer>
     </div>

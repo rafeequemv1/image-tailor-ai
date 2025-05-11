@@ -1,10 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Save, Share } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface ResultDisplayProps {
   result: string | null;
@@ -14,6 +16,8 @@ interface ResultDisplayProps {
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
   const { toast } = useToast();
   const [progress, setProgress] = React.useState(0);
+  const [editPrompt, setEditPrompt] = useState<string>("");
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   // Simulate progress when loading
   React.useEffect(() => {
@@ -46,6 +50,25 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
       return () => clearTimeout(timeout);
     }
   }, [isLoading, result]);
+
+  const handleEditSubmit = () => {
+    if (!editPrompt.trim()) {
+      toast({
+        title: "Empty prompt",
+        description: "Please enter a prompt to edit the image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Edit submitted",
+      description: "Your edit request has been submitted",
+    });
+    
+    // Reset editing state
+    setIsEditing(false);
+  };
 
   const handleDownload = () => {
     if (!result) return;
@@ -143,6 +166,29 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
           className="w-full object-contain"
         />
       </div>
+      
+      {/* Edit section */}
+      <div className="space-y-2 border rounded-lg p-3 bg-muted/10">
+        <h4 className="font-medium text-sm">Edit Image</h4>
+        <div className="flex flex-col gap-2">
+          <Textarea
+            placeholder="Describe the changes you want to make to this image..."
+            value={editPrompt}
+            onChange={(e) => setEditPrompt(e.target.value)}
+            className="min-h-[80px] resize-none"
+          />
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleEditSubmit} 
+              disabled={!editPrompt.trim()}
+              size="sm"
+            >
+              Apply Edit
+            </Button>
+          </div>
+        </div>
+      </div>
+      
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={handleDownload}>
           <Download className="mr-2 h-4 w-4" />

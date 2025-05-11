@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, UserCog, Settings, LogOut, Microscope, Flask, Beaker } from "lucide-react";
+import { LayoutDashboard, UserCog, Settings, LogOut, Microscope, FlaskConical, Beaker } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   Sidebar,
@@ -57,7 +57,7 @@ export function SidebarDemo() {
       label: "Generator",
       href: "/app",
       icon: (
-        <Flask className="h-5 w-5" />
+        <FlaskConical className="h-5 w-5" />
       ),
     },
     {

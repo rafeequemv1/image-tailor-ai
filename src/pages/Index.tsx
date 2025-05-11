@@ -47,7 +47,7 @@ const Index = () => {
     setImages(files);
   };
 
-  // Fix for the generateImage function error
+  // Fix for the generateImage function error - update the return type
   const generateImage = async ({
     apiKey,
     images,
@@ -64,12 +64,12 @@ const Index = () => {
     quality: string;
   }) => {
     try {
-      // This is a placeholder function to make the build pass
-      // In a real implementation, this would call your image generation API
+      // Return a mock response that includes b64_json to match the expected structure
       return {
         success: true,
         data: {
           url: "https://example.com/generated-image.png",
+          b64_json: null, // Add this to match the structure expected in handleGenerate
         },
       };
     } catch (error) {

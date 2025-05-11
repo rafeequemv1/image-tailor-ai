@@ -1,8 +1,8 @@
-
 import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, PencilLine, Undo2, RotateCcw } from "lucide-react";
+import { Eraser, PencilLine, Undo2, RotateCcw, Upload, Trash2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/components/ui/use-toast";
 
 interface DrawingCanvasProps {
   onSave: (file: File) => void;
@@ -15,7 +15,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   width = 400, 
   height = 400 
 }) => {
+  const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(5);
@@ -23,6 +25,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [tool, setTool] = useState<"pencil" | "eraser">("pencil");
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null);
   
   // Initialize canvas context
   useEffect(() => {
@@ -36,6 +39,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.strokeStyle = color;
         ctx.lineWidth = brushSize;
         setContext(ctx);
+        
+        // Create blank canvas with white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Save initial blank canvas
         const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -52,6 +59,48 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       context.lineWidth = brushSize;
     }
   }, [color, brushSize, context, tool]);
+
+  // Draw the background image when it changes
+  useEffect(() => {
+    if (backgroundImage && canvasRef.current && context) {
+      // Clear canvas
+      context.fillStyle = '#FFFFFF';
+      context.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      
+      // Calculate dimensions to maintain aspect ratio
+      const canvas = canvasRef.current;
+      const imgRatio = backgroundImage.width / backgroundImage.height;
+      const canvasRatio = canvas.width / canvas.height;
+      
+      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+      
+      if (imgRatio > canvasRatio) {
+        // Image is wider than canvas (proportionally)
+        drawWidth = canvas.width;
+        drawHeight = canvas.width / imgRatio;
+        offsetY = (canvas.height - drawHeight) / 2;
+      } else {
+        // Image is taller than canvas (proportionally)
+        drawHeight = canvas.height;
+        drawWidth = canvas.height * imgRatio;
+        offsetX = (canvas.width - drawWidth) / 2;
+      }
+      
+      // Draw the image centered
+      context.drawImage(
+        backgroundImage,
+        offsetX,
+        offsetY,
+        drawWidth,
+        drawHeight
+      );
+      
+      // Save this state to history
+      const newState = context.getImageData(0, 0, canvas.width, canvas.height);
+      setHistory([...history.slice(0, historyIndex + 1), newState]);
+      setHistoryIndex(historyIndex + 1);
+    }
+  }, [backgroundImage]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !context) return;
@@ -125,6 +174,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       const clearedState = context.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
       setHistory([...history, clearedState]);
       setHistoryIndex(history.length);
+      
+      // Clear background image
+      setBackgroundImage(null);
     }
   };
 
@@ -136,6 +188,55 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           onSave(file);
         }
       }, "image/png");
+    }
+  };
+
+  const handleImageUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      
+      // Basic validation
+      if (file.type.startsWith('image/')) {
+        const img = new Image();
+        img.onload = () => {
+          setBackgroundImage(img);
+          toast({
+            title: "Image added",
+            description: "You can now draw on top of the image",
+          });
+        };
+        img.onerror = () => {
+          toast({
+            title: "Error",
+            description: "Failed to load the image",
+            variant: "destructive",
+          });
+        };
+        img.src = URL.createObjectURL(file);
+      } else {
+        toast({
+          title: "Invalid file",
+          description: "Please select an image file",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleRemoveBackground = () => {
+    if (backgroundImage && canvasRef.current && context) {
+      // Keep current drawings but remove the background image
+      setBackgroundImage(null);
+      toast({
+        title: "Background removed",
+        description: "Background image has been removed",
+      });
     }
   };
 
@@ -193,6 +294,24 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             />
           </>
         )}
+      </div>
+      
+      <div className="flex space-x-2">
+        <Button variant="outline" size="sm" onClick={handleImageUpload} className="flex items-center">
+          <Upload className="h-4 w-4 mr-1" /> Upload Image
+        </Button>
+        {backgroundImage && (
+          <Button variant="outline" size="sm" onClick={handleRemoveBackground} className="flex items-center">
+            <Trash2 className="h-4 w-4 mr-1" /> Remove Background
+          </Button>
+        )}
+        <input 
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="hidden"
+        />
       </div>
       
       <div className="border rounded-md overflow-hidden">

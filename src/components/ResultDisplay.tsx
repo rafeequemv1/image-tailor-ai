@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input";
 interface ResultDisplayProps {
   result: string | null;
   isLoading: boolean;
+  onApplyEdit?: (prompt: string, imageUrl: string) => void;
 }
 
-const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
+const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading, onApplyEdit }) => {
   const { toast } = useToast();
   const [progress, setProgress] = React.useState(0);
   const [editPrompt, setEditPrompt] = useState<string>("");
@@ -61,13 +62,24 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
       return;
     }
 
+    if (!result) {
+      toast({
+        title: "No image to edit",
+        description: "Please generate an image first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Call the parent component's edit handler with the current image as reference
+    if (onApplyEdit) {
+      onApplyEdit(editPrompt, result);
+    }
+    
     toast({
       title: "Edit submitted",
       description: "Your edit request has been submitted",
     });
-    
-    // Reset editing state
-    setIsEditing(false);
   };
 
   const handleDownload = () => {

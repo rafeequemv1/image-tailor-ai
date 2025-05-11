@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,8 +60,9 @@ const App = () => {
     setEditPrompt(e.target.value);
   };
 
-  const handleGenerateWithEdit = async () => {
-    if (!editPrompt) {
+  // New function to handle applying edits to the current image
+  const handleApplyEdit = async (editPromptText: string, currentImageUrl: string) => {
+    if (!editPromptText) {
       toast({
         title: "No Edit Prompt",
         description: "Please enter a prompt to guide the image editing.",
@@ -74,17 +74,48 @@ const App = () => {
     setIsLoading(true);
     
     try {
-      // Implementation for handling the edit prompt would go here
-      // For now, we'll just update the prompt and regenerate
-      setPrompt(editPrompt);
-      handleGenerate();
+      // First, fetch the current image as a File object
+      const response = await fetch(currentImageUrl);
+      const blob = await response.blob();
+      const imageFile = new File([blob], "reference-image.png", { type: blob.type });
+      
+      // Create a new array with just the reference image
+      const imageFiles = [imageFile];
+      
+      // Call the image service with the edit prompt and the current image as reference
+      const generationResponse = await generateImage({
+        apiKey,
+        images: imageFiles,
+        prompt: editPromptText,
+        makeTransparent,
+        style,
+        quality,
+      });
+
+      if (!generationResponse.success) {
+        throw new Error(generationResponse.error || "Failed to edit image");
+      }
+
+      // Update the result with the edited image
+      if (generationResponse.data?.b64_json) {
+        setResult(`data:image/png;base64,${generationResponse.data.b64_json}`);
+      } 
+      else if (generationResponse.data?.url) {
+        setResult(generationResponse.data.url);
+      } else {
+        throw new Error("No image data received");
+      }
+      
+      // Clear the edit prompt
+      setEditPrompt("");
     } catch (error) {
       console.error(error);
       toast({
         title: "Edit Failed",
-        description: "Failed to apply the edit to the image.",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -188,29 +219,12 @@ const App = () => {
               <CardTitle>Result</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ResultDisplay result={result} isLoading={isLoading} />
-              
-              {result && (
-                <div className="space-y-2">
-                  <label htmlFor="editPrompt" className="block text-sm font-medium text-gray-700">
-                    Edit Image
-                  </label>
-                  <Textarea
-                    id="editPrompt"
-                    placeholder="Describe how you want to edit the generated image..."
-                    value={editPrompt}
-                    onChange={handleEditPromptChange}
-                    className="w-full h-24"
-                  />
-                  <Button 
-                    onClick={handleGenerateWithEdit}
-                    disabled={isLoading || !editPrompt}
-                    className="w-full"
-                  >
-                    {isLoading ? "Applying Edit..." : "Apply Edit"}
-                  </Button>
-                </div>
-              )}
+              {/* Pass the handleApplyEdit function to ResultDisplay */}
+              <ResultDisplay 
+                result={result} 
+                isLoading={isLoading} 
+                onApplyEdit={handleApplyEdit}
+              />
             </CardContent>
           </Card>
         </div>

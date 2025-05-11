@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,6 +77,9 @@ const Index = () => {
       } else {
         throw new Error("No image data received");
       }
+      
+      // Clear uploaded images after successful generation to prevent caching issues
+      setImages([]);
     } catch (error) {
       console.error(error);
       toast({

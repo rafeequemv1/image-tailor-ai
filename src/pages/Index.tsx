@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -5,8 +6,7 @@ import Navigation from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
-import { Beaker } from "lucide-react";
-import { Hero } from "@/components/ui/animated-hero";
+import { Beaker, Flask } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -45,39 +45,6 @@ const Index = () => {
 
   const handleImageUpload = (files: File[]) => {
     setImages(files);
-  };
-
-  // Fix for the generateImage function error - update the return type
-  const generateImage = async ({
-    apiKey,
-    images,
-    prompt,
-    makeTransparent,
-    style,
-    quality,
-  }: {
-    apiKey: string;
-    images: File[];
-    prompt: string;
-    makeTransparent: boolean;
-    style: string;
-    quality: string;
-  }) => {
-    try {
-      // Return a mock response that includes b64_json to match the expected structure
-      return {
-        success: true,
-        data: {
-          url: "https://example.com/generated-image.png",
-          b64_json: null, // Add this to match the structure expected in handleGenerate
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: "Failed to generate image",
-      };
-    }
   };
 
   const handleGenerate = async () => {
@@ -142,11 +109,9 @@ const Index = () => {
       <Navigation />
       
       <div className="container mx-auto px-4 py-16 max-w-5xl flex-grow flex flex-col items-center justify-center">
-        <Hero />
-        
         <div className="text-center mb-12">
           <div className="flex justify-center mb-4">
-            <Beaker className="h-16 w-16 text-blue-600" />
+            <Flask className="h-16 w-16 text-blue-600" />
           </div>
           <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
             Sci-icons

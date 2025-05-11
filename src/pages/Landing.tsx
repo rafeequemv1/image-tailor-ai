@@ -4,9 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Beaker, Microscope } from "lucide-react";
-import { Hero } from "@/components/ui/animated-hero";
-import { ThreeDPhotoCarousel } from "@/components/ui/3d-carousel";
+import { Beaker, Flask, Microscope } from "lucide-react";
 
 const Landing = () => {
   return (
@@ -14,10 +12,9 @@ const Landing = () => {
       <Navigation />
       
       <main className="flex-grow">
-        {/* Hero Section with Animated Hero */}
+        {/* Hero Section */}
         <section className="py-20 md:py-32 bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-background">
           <div className="container mx-auto px-4 text-center">
-            <Hero />
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                 Scientific Icons Made Simple
@@ -38,22 +35,6 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* 3D Carousel Section */}
-        <section className="py-16 md:py-24">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Example Scientific Icons</h2>
-            <div className="flex justify-center">
-              <div className="w-full max-w-4xl">
-                <div className="min-h-[500px] flex flex-col justify-center rounded-lg space-y-4">
-                  <div className="p-2">
-                    <ThreeDPhotoCarousel />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Features Section */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
@@ -61,7 +42,7 @@ const Landing = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="flex flex-col items-center text-center p-6 rounded-lg bg-card border">
                 <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
-                  <Beaker className="text-blue-600 dark:text-blue-400 h-6 w-6" />
+                  <Flask className="text-blue-600 dark:text-blue-400 h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">Scientific Concepts</h3>
                 <p className="text-muted-foreground">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
-import { Beaker, FlaskConical } from "lucide-react";
+import { Beaker, Flask } from "lucide-react";
 
 const App = () => {
   const { toast } = useToast();
@@ -273,7 +274,7 @@ const App = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FlaskConical className="h-5 w-5" />
+                <Flask className="h-5 w-5" />
                 Input
               </CardTitle>
             </CardHeader>

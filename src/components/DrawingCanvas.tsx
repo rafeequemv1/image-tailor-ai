@@ -6,6 +6,12 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { fabric } from 'fabric';
 import { Input } from "@/components/ui/input";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 interface DrawingCanvasProps {
   onSave: (file: File) => void;
@@ -299,8 +305,109 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         mr: true, // middle-right
         mtr: true, // middle-top-rotation
       });
+
+      // Add context menu event handlers
+      fabricCanvas.on('mouse:down', function(opt) {
+        const evt = opt.e as MouseEvent;
+        if (evt.button === 2 && opt.target) { // Right click and there's a target
+          // The context menu will be handled by the ContextMenu component
+        }
+      });
     }
   }, [fabricCanvas]);
+
+  // Context menu action handlers
+  const handleDuplicateObject = () => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (!activeObject) return;
+
+    // Clone the object
+    activeObject.clone((cloned: fabric.Object) => {
+      // Offset the position slightly
+      cloned.set({
+        left: activeObject.left! + 10,
+        top: activeObject.top! + 10,
+        evented: true,
+      });
+
+      // Add to canvas
+      fabricCanvas.add(cloned);
+      fabricCanvas.setActiveObject(cloned);
+      fabricCanvas.renderAll();
+
+      // If it's an image, track it
+      if (cloned instanceof fabric.Image) {
+        setUploadedImages(prev => [...prev, cloned]);
+      }
+
+      toast({
+        title: "Object duplicated",
+        description: "A copy has been created",
+      });
+    });
+  };
+
+  const handleSendBackward = () => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (activeObject) {
+      fabricCanvas.sendBackwards(activeObject);
+      fabricCanvas.renderAll();
+    }
+  };
+
+  const handleSendForward = () => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (activeObject) {
+      fabricCanvas.bringForward(activeObject);
+      fabricCanvas.renderAll();
+    }
+  };
+
+  const handleBringToFront = () => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (activeObject) {
+      fabricCanvas.bringToFront(activeObject);
+      fabricCanvas.renderAll();
+    }
+  };
+
+  const handleSendToBack = () => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (activeObject) {
+      fabricCanvas.sendToBack(activeObject);
+      fabricCanvas.renderAll();
+    }
+  };
+
+  const handleDeleteObject = () => {
+    if (!fabricCanvas) return;
+    
+    const activeObject = fabricCanvas.getActiveObject();
+    if (activeObject) {
+      fabricCanvas.remove(activeObject);
+      
+      // If it's an image, remove from tracking array
+      if (activeObject instanceof fabric.Image) {
+        setUploadedImages(prev => prev.filter(img => img !== activeObject));
+      }
+      
+      fabricCanvas.renderAll();
+      toast({
+        title: "Object deleted",
+        description: "The selected object has been removed",
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -405,18 +512,36 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         <p className="text-xs text-muted-foreground mt-0 mb-1">Click on canvas to add text</p>
       )}
       
-      <div className="border rounded-md overflow-hidden bg-white">
-        <canvas
-          ref={canvasRef}
-          onClick={handleCanvasClick}
-          style={{ 
-            width: "100%",
-            height: "auto",
-            touchAction: "none",
-          }}
-          className={`cursor-${tool === "text" ? "text" : tool === "select" ? "move" : "crosshair"}`}
-        />
-      </div>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div className="border rounded-md overflow-hidden bg-white">
+            <canvas
+              ref={canvasRef}
+              onClick={handleCanvasClick}
+              onContextMenu={(e) => {
+                // Only prevent default if there's an active object
+                if (fabricCanvas && fabricCanvas.getActiveObject()) {
+                  e.preventDefault();
+                }
+              }}
+              style={{ 
+                width: "100%",
+                height: "auto",
+                touchAction: "none",
+              }}
+              className={`cursor-${tool === "text" ? "text" : tool === "select" ? "move" : "crosshair"}`}
+            />
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={handleDuplicateObject}>Duplicate</ContextMenuItem>
+          <ContextMenuItem onClick={handleSendBackward}>Send Backward</ContextMenuItem>
+          <ContextMenuItem onClick={handleSendForward}>Bring Forward</ContextMenuItem>
+          <ContextMenuItem onClick={handleBringToFront}>Bring to Front</ContextMenuItem>
+          <ContextMenuItem onClick={handleSendToBack}>Send to Back</ContextMenuItem>
+          <ContextMenuItem onClick={handleDeleteObject} className="text-red-500">Delete</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
       
       <Button onClick={handleSave} className="mt-1">
         Use Drawing as Reference

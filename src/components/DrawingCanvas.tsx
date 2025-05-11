@@ -1,7 +1,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser, PencilLine, Undo2, RotateCcw, Upload, Trash2, Move, Scale, Layers, Type } from "lucide-react";
+import { Eraser, PencilLine, Undo2, RotateCcw, Upload, Trash2, Type } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { fabric } from 'fabric';
@@ -24,7 +24,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
   const [color, setColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(5);
-  const [tool, setTool] = useState<"select" | "pencil" | "eraser" | "text">("select");
+  const [tool, setTool] = useState<"pencil" | "eraser" | "text">("pencil");
   const [uploadedImages, setUploadedImages] = useState<fabric.Image[]>([]);
   const [textInput, setTextInput] = useState("");
 
@@ -42,7 +42,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       canvas.freeDrawingBrush.width = brushSize;
       
       // Set the initial interaction mode
-      canvas.isDrawingMode = false;
+      canvas.isDrawingMode = true;
+      
+      // Add object selected event listener to activate move mode
+      canvas.on('selection:created', function() {
+        canvas.isDrawingMode = false;
+      });
+      
+      // Add mouse down listener for the canvas background
+      canvas.on('mouse:down', function(opt) {
+        // If clicking on the background, reactivate the current tool mode
+        if (!opt.target) {
+          if (tool === 'pencil' || tool === 'eraser') {
+            canvas.isDrawingMode = true;
+          }
+        }
+      });
       
       setFabricCanvas(canvas);
       
@@ -71,17 +86,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     fabricCanvas.isDrawingMode = tool === "pencil" || tool === "eraser";
     
-    // Make all objects selectable and movable in select mode
-    fabricCanvas.forEachObject(obj => {
-      obj.selectable = tool === "select";
-      obj.evented = tool === "select";
-    });
-    
     if (tool === "pencil") {
       fabricCanvas.freeDrawingBrush.color = color;
     } else if (tool === "eraser") {
       fabricCanvas.freeDrawingBrush.color = "#FFFFFF"; // White color to act as eraser
     }
+    
+    // Make all objects selectable regardless of tool
+    fabricCanvas.forEachObject(obj => {
+      obj.selectable = true;
+      obj.evented = true;
+    });
     
     fabricCanvas.renderAll();
   }, [tool, fabricCanvas, color]);
@@ -153,12 +168,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 img.set({
                   left: fabricCanvas.width! / 2 - (img.width! * img.scaleX!) / 2,
                   top: fabricCanvas.height! / 2 - (img.height! * img.scaleY!) / 2,
-                });
-                
-                // Make the image interactive
-                img.set({
-                  selectable: tool === "select",
-                  evented: tool === "select",
+                  selectable: true,
+                  evented: true,
                 });
                 
                 // Add image to canvas
@@ -167,9 +178,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 fabricCanvas.setActiveObject(img);
                 fabricCanvas.renderAll();
                 
+                // Automatically switch to move mode when image is added
+                fabricCanvas.isDrawingMode = false;
+                
                 toast({
                   title: "Image added",
-                  description: "You can now draw on top of the image",
+                  description: "You can now move, resize, or draw on top of the image",
                 });
               });
             }
@@ -232,10 +246,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   };
 
-  const handleSelectTool = () => {
-    setTool("select");
-  };
-
   const handlePencilTool = () => {
     setTool("pencil");
   };
@@ -259,11 +269,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       fill: color,
       textAlign: 'center',
       originX: 'center',
-      originY: 'center'
+      originY: 'center',
+      selectable: true,
+      editable: true
     });
     
     fabricCanvas.add(text);
     fabricCanvas.setActiveObject(text);
+    fabricCanvas.isDrawingMode = false;
     fabricCanvas.renderAll();
     
     // Clear the text input
@@ -271,63 +284,98 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     toast({
       title: "Text added",
-      description: "Text has been added to the canvas",
+      description: "Text has been added to the canvas. Click on it to move or edit.",
     });
   };
+  
+  // Function to add text directly on canvas double click
+  const addTextAtPosition = (x: number, y: number) => {
+    if (!fabricCanvas) return;
+    
+    const text = new fabric.IText("Double-click to edit", {
+      left: x,
+      top: y,
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fill: color,
+      selectable: true,
+      editable: true
+    });
+    
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.isDrawingMode = false;
+    text.enterEditing();
+    fabricCanvas.renderAll();
+  };
+  
+  // Add double-click listener to add text directly
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    
+    const handleDblClick = (opt: any) => {
+      if (tool === "text" && !opt.target) {
+        const pointer = fabricCanvas.getPointer(opt.e);
+        addTextAtPosition(pointer.x, pointer.y);
+      }
+    };
+    
+    fabricCanvas.on('mouse:dblclick', handleDblClick);
+    
+    return () => {
+      fabricCanvas.off('mouse:dblclick', handleDblClick);
+    };
+  }, [fabricCanvas, tool, color]);
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-1">
         <Button 
-          variant={tool === "select" ? "default" : "outline"} 
-          size="icon" 
-          onClick={handleSelectTool}
-          className="h-8 w-8"
-        >
-          <Move className="h-4 w-4" />
-        </Button>
-        <Button 
           variant={tool === "pencil" ? "default" : "outline"} 
-          size="icon" 
+          size="sm" 
           onClick={handlePencilTool}
-          className="h-8 w-8"
+          className="h-7 px-2"
+          title="Draw"
         >
-          <PencilLine className="h-4 w-4" />
+          <PencilLine className="h-3.5 w-3.5" />
         </Button>
         <Button 
           variant={tool === "eraser" ? "default" : "outline"} 
-          size="icon" 
+          size="sm" 
           onClick={handleEraserTool}
-          className="h-8 w-8"
+          className="h-7 px-2"
+          title="Erase"
         >
-          <Eraser className="h-4 w-4" />
+          <Eraser className="h-3.5 w-3.5" />
         </Button>
         <Button 
           variant={tool === "text" ? "default" : "outline"} 
-          size="icon" 
+          size="sm" 
           onClick={handleTextTool}
-          className="h-8 w-8"
+          className="h-7 px-2"
+          title="Add Text"
         >
-          <Type className="h-4 w-4" />
+          <Type className="h-3.5 w-3.5" />
         </Button>
 
-        <div className="h-8 border-l mx-1"></div>
+        <div className="h-7 border-l mx-1"></div>
         
-        <Button variant="outline" size="icon" onClick={handleUndo} className="h-8 w-8">
-          <Undo2 className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={handleUndo} className="h-7 px-2" title="Undo">
+          <Undo2 className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="outline" size="icon" onClick={handleClear} className="h-8 w-8">
-          <RotateCcw className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={handleClear} className="h-7 px-2" title="Clear Canvas">
+          <RotateCcw className="h-3.5 w-3.5" />
         </Button>
         
-        <div className="h-8 border-l mx-1"></div>
+        <div className="h-7 border-l mx-1"></div>
         
-        <Button variant="outline" size="icon" onClick={handleImageUpload} className="h-8 w-8">
-          <Upload className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={handleImageUpload} className="h-7" title="Upload Image">
+          <Upload className="h-3.5 w-3.5 mr-1" />
+          <span className="text-xs">Image</span>
         </Button>
         {uploadedImages.length > 0 && (
-          <Button variant="outline" size="icon" onClick={handleRemoveBackground} className="h-8 w-8">
-            <Trash2 className="h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={handleRemoveBackground} className="h-7 px-2" title="Remove Image">
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         )}
         
@@ -340,7 +388,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           multiple
         />
         
-        <div className="h-8 border-l mx-1"></div>
+        <div className="h-7 border-l mx-1"></div>
         
         {(tool === "pencil" || tool === "text") && (
           <input
@@ -348,7 +396,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             id="colorPicker"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            className="w-8 h-8 rounded-md cursor-pointer border-none p-0"
+            className="w-7 h-7 rounded-md cursor-pointer border-none p-0"
+            title="Select Color"
           />
         )}
         
@@ -361,7 +410,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               step={1}
               value={[brushSize]}
               onValueChange={(value) => setBrushSize(value[0])}
-              className="w-20"
+              className="w-16"
             />
             <span className="text-xs text-muted-foreground">{brushSize}px</span>
           </div>
@@ -375,10 +424,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
             size={10}
-            className="h-8 text-sm"
+            className="h-7 text-xs"
           />
-          <Button onClick={addText} size="sm" className="h-8">Add Text</Button>
+          <Button onClick={addText} size="sm" className="h-7 text-xs">Add</Button>
         </div>
+      )}
+      
+      {tool === "text" && (
+        <p className="text-xs text-muted-foreground mt-0 mb-1">Double-click on canvas to add text directly</p>
       )}
       
       <div className="border rounded-md overflow-hidden bg-white">
@@ -389,7 +442,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             height: "auto",
             touchAction: "none",
           }}
-          className={`cursor-${tool === "select" ? "move" : tool === "text" ? "text" : "crosshair"}`}
+          className={`cursor-${tool === "text" ? "text" : "crosshair"}`}
         />
       </div>
       

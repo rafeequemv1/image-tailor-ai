@@ -14,7 +14,7 @@ const AppLayout = () => {
           <SidebarTrigger />
           <div className="flex-1" />
         </div>
-        <div className="p-4 md:p-6 w-full">
+        <div className="p-4 md:p-6 w-full max-w-full">
           <Outlet />
         </div>
       </SidebarInset>

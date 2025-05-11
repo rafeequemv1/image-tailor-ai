@@ -67,15 +67,15 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header with logo/branding */}
-      <header className="w-full py-4 px-6 bg-white border-b">
-        <div className="container mx-auto">
+      <header className="w-full py-3 px-4 bg-white border-b">
+        <div className="max-w-screen-xl mx-auto w-full flex justify-between items-center">
           <Link to="/" className="text-xl font-bold">ImageAI</Link>
         </div>
       </header>
       
-      {/* Main content area */}
-      <main className="flex-grow flex items-center justify-center p-4 sm:p-6 md:p-8">
-        <Card className="w-full max-w-md mx-auto shadow-lg">
+      {/* Main content area - simplified to eliminate excess space */}
+      <main className="flex-grow flex items-center justify-center w-full">
+        <Card className="mx-auto w-full max-w-md shadow-lg m-4 sm:m-0">
           <CardHeader className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Welcome Back</h1>
             <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
@@ -130,7 +130,7 @@ const Login = () => {
 
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full bg-black hover:bg-gray-800"
                 disabled={loading}
               >
                 {loading ? (
@@ -139,7 +139,7 @@ const Login = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Logging in...
+                    Signing in...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
@@ -151,7 +151,7 @@ const Login = () => {
             </form>
           </CardContent>
           
-          <CardFooter className="flex justify-center border-t p-6">
+          <CardFooter className="flex justify-center border-t p-4">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link to="/register" className="font-medium text-primary hover:underline">

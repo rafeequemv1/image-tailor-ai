@@ -20,7 +20,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* App routes with sidebar layout */}
+        {/* App routes with sidebar layout - no auth required now */}
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<App />} />
           <Route path="library" element={<Library />} />

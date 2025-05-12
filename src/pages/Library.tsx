@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,6 @@ import {
 
 interface UserImage {
   id: string;
-  user_id: string;
   image_url: string;
   prompt: string;
   title: string;
@@ -40,68 +39,51 @@ const Library = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [images, setImages] = useState<UserImage[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const imagesPerPage = 12;
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/login");
-        return;
-      }
-      
-      setUser(session.user);
-      fetchUserImages(session.user.id);
-    };
-    
-    checkUser();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        navigate("/login");
-      } else if (session) {
-        setUser(session.user);
-        fetchUserImages(session.user.id);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const fetchUserImages = async (userId: string) => {
-    setIsLoading(true);
-    try {
-      let { data, error, count } = await supabase
-        .from('user_images')
-        .select('*', { count: 'exact' })
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .range((currentPage - 1) * imagesPerPage, currentPage * imagesPerPage - 1);
-
-      if (error) {
-        throw error;
-      }
-      
-      setImages(data || []);
-      setTotalPages(Math.ceil((count || 0) / imagesPerPage));
-    } catch (error) {
-      console.error("Error fetching images:", error);
-      toast({
-        title: "Error fetching images",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  
+  // Sample/demo images
+  const demoImages: UserImage[] = [
+    {
+      id: "1",
+      image_url: "https://images.unsplash.com/photo-1618477388954-7852f32655ec?q=80&w=400&h=400",
+      prompt: "A colorful abstract scientific illustration",
+      title: "Molecular Visualization",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "2",
+      image_url: "https://images.unsplash.com/photo-1564325724739-bae0bd08762c?q=80&w=400&h=400",
+      prompt: "Scientific icon showing DNA structure",
+      title: "DNA Model",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "3",
+      image_url: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=400&h=400",
+      prompt: "Microscope icon for science app",
+      title: "Modern Microscope",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "4",
+      image_url: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=400&h=400",
+      prompt: "Science lab equipment illustration",
+      title: "Laboratory Setup",
+      created_at: new Date().toISOString()
     }
-  };
+  ];
+
+  // Load demo images on component mount
+  React.useEffect(() => {
+    setImages(demoImages);
+    setTotalPages(1);
+    setIsLoading(false);
+  }, []);
 
   const handleDownload = (imageUrl: string, title: string) => {
     const link = document.createElement("a");
@@ -118,32 +100,15 @@ const Library = () => {
 
   const handleDelete = async (imageId: string) => {
     setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_images')
-        .delete()
-        .eq('id', imageId);
-
-      if (error) {
-        throw error;
-      }
-
+    // Simulate delete process
+    setTimeout(() => {
       setImages(images.filter(image => image.id !== imageId));
       toast({
         title: "Image deleted",
         description: "The image has been successfully deleted from your library",
       });
-      fetchUserImages(user.id);
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      toast({
-        title: "Error deleting image",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   const handleEdit = (imageUrl: string, prompt: string) => {
@@ -164,8 +129,6 @@ const Library = () => {
     }
     return pages;
   };
-
-  if (!user) return null;
 
   return (
     <div className="flex flex-col">

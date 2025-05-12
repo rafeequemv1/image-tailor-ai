@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,27 +7,31 @@ import { useToast } from "@/components/ui/use-toast";
 import Footer from "@/components/Footer";
 import { LogIn, Mail, Lock } from "lucide-react";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate login process
+    // Simulate login process without authentication
     setTimeout(() => {
       toast({
-        title: "Login Demo",
-        description: "This is a demo login page without actual authentication."
+        title: "Login Successful",
+        description: "Welcome back! This is a demo without actual authentication."
       });
       setLoading(false);
+      // Navigate to app without actual auth
+      window.location.href = "/app";
     }, 1000);
   };
-  return <div className="min-h-screen flex flex-col bg-gray-50 mx-[240px]">
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header with logo/branding */}
       <header className="w-full py-3 px-4 bg-white border-b">
         <div className="max-w-screen-xl mx-auto w-full flex justify-between items-center">
@@ -34,12 +39,12 @@ const Login = () => {
         </div>
       </header>
       
-      {/* Main content area - full height and centered */}
-      <main className="flex-1 flex items-center justify-center w-full p-4 mx-0">
+      {/* Main content area - centered both horizontally and vertically */}
+      <main className="flex-1 flex items-center justify-center w-full p-4">
         <Card className="mx-auto w-full max-w-md shadow-lg">
           <CardHeader className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Welcome Back</h1>
-            <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
+            <p className="text-sm text-muted-foreground">Sign in to continue</p>
           </CardHeader>
           
           <CardContent>
@@ -96,6 +101,8 @@ const Login = () => {
       </main>
       
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Login;

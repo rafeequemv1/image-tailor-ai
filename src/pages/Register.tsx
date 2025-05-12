@@ -28,13 +28,15 @@ const Register = () => {
     
     setLoading(true);
 
-    // Simulate registration process
+    // Simulate registration process without authentication
     setTimeout(() => {
       toast({
-        title: "Registration Demo",
-        description: "This is a demo registration page without actual authentication.",
+        title: "Registration Successful",
+        description: "Your account has been created! This is a demo without actual authentication.",
       });
       setLoading(false);
+      // Redirect to login page
+      window.location.href = "/login";
     }, 1000);
   };
 

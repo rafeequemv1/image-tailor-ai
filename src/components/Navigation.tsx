@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Home, User, Microscope } from "lucide-react";
+import { Home, User, Microscope, FlaskConical } from "lucide-react";
 
 const Navigation = () => {
   return (
@@ -36,6 +36,12 @@ const Navigation = () => {
             </Link>
           </Button>
           
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/app" title="Generate Icons">
+              <FlaskConical className="h-5 w-5" />
+            </Link>
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -51,17 +57,10 @@ const Navigation = () => {
               <DropdownMenuLabel>Menu</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/">Generate Scientific Icons</Link>
+                <Link to="/app">Generate Scientific Icons</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/app/library">Icon Library</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/login">Sign In</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/register">Register</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

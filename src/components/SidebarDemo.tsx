@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { UserCog, Settings, LogOut, Microscope, FlaskConical, Beaker } from "lucide-react";
+import { UserCog, Settings, LogOut, Microscope, FlaskConical } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   Sidebar,
@@ -14,7 +14,6 @@ import {
   SidebarMenuItem,
   useSidebar
 } from "./ui/sidebar";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 import {
   DropdownMenu,
@@ -44,23 +43,6 @@ export function SidebarDemo() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account.",
-      });
-      navigate("/login");
-    }
-  };
-  
   const links = [
     {
       label: "Generator",
@@ -71,7 +53,7 @@ export function SidebarDemo() {
     },
     {
       label: "Library",
-      href: "/library",
+      href: "/app/library",
       icon: (
         <Microscope className="h-5 w-5" />
       ),
@@ -92,17 +74,6 @@ export function SidebarDemo() {
         >
           Sci-icons
         </motion.span>
-      </Link>
-    );
-  };
-
-  const LogoIcon = () => {
-    return (
-      <Link
-        to="/"
-        className="font-normal flex space-x-2 items-center text-sm py-1 relative z-20"
-      >
-        <div className="h-5 w-6 bg-blue-600 rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
       </Link>
     );
   };
@@ -142,24 +113,25 @@ export function SidebarDemo() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>Menu</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center gap-2">
-                    <UserCog className="h-4 w-4" />
-                    <span>Profile</span>
+                  <Link to="/" className="flex items-center gap-2">
+                    <FlaskConical className="h-4 w-4" />
+                    <span>Home</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/settings" className="flex items-center gap-2">
+                  <Link to="/app" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    <span>Settings</span>
+                    <span>Generator</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  <span>Sign Out</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/app/library" className="flex items-center gap-2">
+                    <Microscope className="h-4 w-4" />
+                    <span>Library</span>
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

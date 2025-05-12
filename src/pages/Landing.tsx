@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
-import { LogIn, ChevronRight, Beaker, Microscope, Users } from "lucide-react";
+import { Beaker, ChevronRight, FlaskConical, Microscope, Users } from "lucide-react";
 
 const Landing = () => {
   return (
@@ -40,17 +40,6 @@ const Landing = () => {
                     <Link to="/app" className="flex items-center">
                       Get Started 
                       <ChevronRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="text-white border-white hover:bg-white hover:text-black"
-                    asChild
-                  >
-                    <Link to="/login" className="flex items-center">
-                      <LogIn className="mr-2 h-5 w-5" />
-                      Log In
                     </Link>
                   </Button>
                 </div>
@@ -129,43 +118,12 @@ const Landing = () => {
                 <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center mb-6">
                   <Users className="text-white h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-4">Collaboration</h3>
+                <h3 className="text-xl font-bold mb-4">Easy Sharing</h3>
                 <p className="text-gray-600">
-                  Share and collaborate on scientific illustrations with your team,
+                  Share your scientific illustrations with colleagues,
                   making research visualization a seamless process.
                 </p>
               </motion.div>
-            </div>
-          </div>
-        </section>
-
-        {/* Image Showcase Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Gallery</h2>
-              <div className="h-1 w-20 bg-black mx-auto mb-6"></div>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Explore examples of scientific illustrations created with our platform
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <motion.div
-                  key={item}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: item * 0.1 }}
-                  viewport={{ once: true }}
-                  className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 opacity-20 group-hover:opacity-10 transition-opacity" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Beaker className="w-16 h-16 text-white opacity-40" />
-                  </div>
-                </motion.div>
-              ))}
             </div>
           </div>
         </section>

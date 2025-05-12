@@ -9,13 +9,14 @@ import AppLayout from './layouts/AppLayout.tsx';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import NotFound from './pages/NotFound.tsx';
+import Landing from './pages/Landing.tsx';
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <SidebarProvider>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<App />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         

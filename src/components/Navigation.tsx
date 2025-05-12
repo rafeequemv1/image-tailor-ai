@@ -31,13 +31,13 @@ const Navigation = () => {
           </Button>
           
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/app/library" title="Icon Library">
+            <Link to="/library" title="Icon Library">
               <Microscope className="h-5 w-5" />
             </Link>
           </Button>
           
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/app" title="Generate Icons">
+            <Link to="/" title="Generate Icons">
               <FlaskConical className="h-5 w-5" />
             </Link>
           </Button>
@@ -57,10 +57,10 @@ const Navigation = () => {
               <DropdownMenuLabel>Menu</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/app">Generate Scientific Icons</Link>
+                <Link to="/">Generate Scientific Icons</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/app/library">Icon Library</Link>
+                <Link to="/library">Icon Library</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -46,14 +46,14 @@ export function SidebarDemo() {
   const links = [
     {
       label: "Generator",
-      href: "/app",
+      href: "/",
       icon: (
         <FlaskConical className="h-5 w-5" />
       ),
     },
     {
       label: "Library",
-      href: "/app/library",
+      href: "/library",
       icon: (
         <Microscope className="h-5 w-5" />
       ),
@@ -82,7 +82,6 @@ export function SidebarDemo() {
     <Sidebar>
       <SidebarHeader>
         <div className="px-3 py-2">
-          {/* Link to landing page */}
           <div className="sidebar-logo">
             <Logo />
           </div>
@@ -118,17 +117,11 @@ export function SidebarDemo() {
                 <DropdownMenuItem asChild>
                   <Link to="/" className="flex items-center gap-2">
                     <FlaskConical className="h-4 w-4" />
-                    <span>Home</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/app" className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
                     <span>Generator</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/app/library" className="flex items-center gap-2">
+                  <Link to="/library" className="flex items-center gap-2">
                     <Microscope className="h-4 w-4" />
                     <span>Library</span>
                   </Link>

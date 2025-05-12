@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,13 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 import Footer from "@/components/Footer";
 import { LogIn, Mail, Lock } from "lucide-react";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -22,23 +21,21 @@ const Login = () => {
     setTimeout(() => {
       toast({
         title: "Login Demo",
-        description: "This is a demo login page without actual authentication.",
+        description: "This is a demo login page without actual authentication."
       });
       setLoading(false);
     }, 1000);
   };
-
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+  return <div className="min-h-screen flex flex-col bg-gray-50 mx-[240px]">
       {/* Header with logo/branding */}
       <header className="w-full py-3 px-4 bg-white border-b">
         <div className="max-w-screen-xl mx-auto w-full flex justify-between items-center">
-          <Link to="/" className="text-xl font-bold">ImageAI</Link>
+          <Link to="/" className="text-xl font-bold">Sci-Icons</Link>
         </div>
       </header>
       
       {/* Main content area - full height and centered */}
-      <main className="flex-1 flex items-center justify-center w-full p-4">
+      <main className="flex-1 flex items-center justify-center w-full p-4 mx-0">
         <Card className="mx-auto w-full max-w-md shadow-lg">
           <CardHeader className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Welcome Back</h1>
@@ -53,17 +50,7 @@ const Login = () => {
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                  />
+                  <Input id="email" name="email" type="email" autoComplete="email" required placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" />
                 </div>
               </div>
               
@@ -78,39 +65,21 @@ const Login = () => {
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                  />
+                  <Input id="password" name="password" type="password" autoComplete="current-password" required placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" />
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-black hover:bg-gray-800"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
+              <Button type="submit" className="w-full bg-black hover:bg-gray-800" disabled={loading}>
+                {loading ? <span className="flex items-center gap-2">
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Signing in...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
+                  </span> : <span className="flex items-center gap-2">
                     <LogIn className="h-4 w-4" />
                     Sign In
-                  </span>
-                )}
+                  </span>}
               </Button>
             </form>
           </CardContent>
@@ -127,8 +96,6 @@ const Login = () => {
       </main>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Login;

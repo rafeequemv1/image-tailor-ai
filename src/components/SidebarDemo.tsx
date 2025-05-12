@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, UserCog, Settings, LogOut, Image as ImageIcon, Home } from "lucide-react";
+import { UserCog, Settings, LogOut, Microscope, FlaskConical, Beaker } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   Sidebar,
@@ -14,23 +14,19 @@ import {
   SidebarMenuItem,
   useSidebar
 } from "./ui/sidebar";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "./ui/dropdown-menu";
 
-const SidebarLink = ({ link }: { link: { label: string; href: string; icon: React.ReactNode; onClick?: () => void } }) => {
+const SidebarLink = ({ link }: { link: { label: string; href: string; icon: React.ReactNode } }) => {
   const { state } = useSidebar();
-  
-  if (link.onClick) {
-    return (
-      <SidebarMenuItem>
-        <SidebarMenuButton onClick={link.onClick} tooltip={link.label}>
-          {link.icon}
-          <span>{link.label}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  }
   
   return (
     <SidebarMenuItem>
@@ -67,40 +63,25 @@ export function SidebarDemo() {
   
   const links = [
     {
-      label: "Home",
+      label: "Generator",
       href: "/app",
       icon: (
-        <Home className="h-5 w-5" />
+        <FlaskConical className="h-5 w-5" />
       ),
     },
     {
       label: "Library",
       href: "/library",
       icon: (
-        <ImageIcon className="h-5 w-5" />
+        <Microscope className="h-5 w-5" />
       ),
-    },
-    {
-      label: "Profile",
-      href: "/profile",
-      icon: (
-        <UserCog className="h-5 w-5" />
-      ),
-    },
-    {
-      label: "Logout",
-      href: "#",
-      icon: (
-        <LogOut className="h-5 w-5" />
-      ),
-      onClick: handleLogout
     },
   ];
 
   const Logo = () => {
     return (
       <Link
-        to="/app"
+        to="/"
         className="font-normal flex space-x-2 items-center text-sm py-1 relative z-20"
       >
         <div className="h-5 w-6 bg-blue-600 rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
@@ -109,7 +90,7 @@ export function SidebarDemo() {
           animate={{ opacity: 1 }}
           className="font-medium whitespace-pre text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"
         >
-          AI Image Generator
+          Sci-icons
         </motion.span>
       </Link>
     );
@@ -118,7 +99,7 @@ export function SidebarDemo() {
   const LogoIcon = () => {
     return (
       <Link
-        to="/app"
+        to="/"
         className="font-normal flex space-x-2 items-center text-sm py-1 relative z-20"
       >
         <div className="h-5 w-6 bg-blue-600 rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
@@ -130,6 +111,7 @@ export function SidebarDemo() {
     <Sidebar>
       <SidebarHeader>
         <div className="px-3 py-2">
+          {/* Link to landing page */}
           <div className="sidebar-logo">
             <Logo />
           </div>
@@ -145,17 +127,42 @@ export function SidebarDemo() {
       <SidebarFooter>
         <div className="px-3 py-2">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <div className="flex items-center gap-2">
-                <Avatar>
-                  <AvatarImage src="" alt="Profile" />
-                  <AvatarFallback>
-                    <UserCog className="h-5 w-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <span>My Account</span>
-              </div>
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton>
+                  <div className="flex items-center gap-2">
+                    <Avatar>
+                      <AvatarImage src="" alt="Profile" />
+                      <AvatarFallback>
+                        <UserCog className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>My Account</span>
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2">
+                    <UserCog className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </div>
       </SidebarFooter>

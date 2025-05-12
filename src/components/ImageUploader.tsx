@@ -1,98 +1,117 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, Pencil } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import DrawingModal from "./DrawingModal";
 
 interface ImageUploaderProps {
   onImageUpload: (files: File[]) => void;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({
+  onImageUpload
+}) => {
+  const {
+    toast
+  } = useToast();
   const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
+  const [isDrawingModalOpen, setIsDrawingModalOpen] = useState(false);
 
+  // Generate preview urls when files change
+  useEffect(() => {
+    const urls = files.map(file => URL.createObjectURL(file));
+    setFilePreviewUrls(urls);
+
+    // Cleanup function to revoke object URLs
+    return () => {
+      urls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [files]);
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...newFiles]);
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
 
-      // Create and store image previews
-      newFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            setPreviews((prev) => [...prev, e.target!.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
+      // Basic validation
+      const validFiles = selectedFiles.filter(file => {
+        const isValid = file.type.startsWith('image/');
+        if (!isValid) {
+          toast({
+            title: "Invalid file",
+            description: `${file.name} is not a valid image file`,
+            variant: "destructive"
+          });
+        }
+        return isValid;
       });
-
-      // Pass the files to the parent component
-      onImageUpload([...files, ...newFiles]);
+      if (validFiles.length > 0) {
+        setFiles(validFiles);
+        onImageUpload(validFiles);
+        toast({
+          title: "Images added",
+          description: `${validFiles.length} image(s) ready for processing`
+        });
+      }
     }
   };
-
-  const removeImage = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviews((prev) => prev.filter((_, i) => i !== index));
-    onImageUpload(files.filter((_, i) => i !== index));
+  
+  const handleSaveDrawing = (file: File) => {
+    setFiles([file]);
+    onImageUpload([file]);
+    toast({
+      title: "Drawing added",
+      description: "Your drawing is ready to be used as a reference"
+    });
   };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium">Upload Images (Optional)</h3>
-        <p className="text-xs text-muted-foreground">You can upload multiple images</p>
-      </div>
-      <div className="flex items-center justify-center w-full">
-        <label
-          htmlFor="image-upload"
-          className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed rounded-lg cursor-pointer bg-muted/30 border-muted-foreground/25 hover:bg-muted/50 transition-all duration-300"
-        >
-          <div className="flex flex-col items-center justify-center pt-2 pb-2">
-            <Upload className="w-6 h-6 mb-1 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              <span className="font-semibold">Click to upload</span> (PNG, JPG)
+  
+  return <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="image-upload" className="cursor-pointer block w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition">
+            <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Upload an image or drag and drop here
             </p>
-          </div>
-          <input
-            id="image-upload"
-            type="file"
-            className="hidden"
-            accept="image/*"
-            multiple
-            onChange={handleFileChange}
-          />
-        </label>
-      </div>
-
-      {previews.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-sm font-medium mb-2">Uploaded Images</h3>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {previews.map((preview, index) => (
-              <div
-                key={index}
-                className="relative group border rounded-lg overflow-hidden aspect-square"
-              >
-                <img
-                  src={preview}
-                  alt={`Uploaded ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={() => removeImage(index)}
-                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 p-1 rounded-full transition-opacity opacity-0 group-hover:opacity-100"
-                >
-                  <X className="h-4 w-4 text-white" />
-                </button>
-              </div>
-            ))}
-          </div>
+            <Input id="image-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" multiple />
+          </label>
         </div>
-      )}
-    </div>
-  );
+        
+        <div>
+          <Button variant="outline" className="w-full h-full min-h-[118px] border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-muted-foreground/50 transition" onClick={() => setIsDrawingModalOpen(true)}>
+            <div className="flex flex-col items-center">
+              <Pencil className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground text-center break-words px-0 text-xs">Create a drawing to use as reference</p>
+            </div>
+          </Button>
+        </div>
+      </div>
+      
+      {filePreviewUrls.length > 0 && files.length > 0 && <div className="space-y-3">
+          <p className="text-sm font-medium">Selected images:</p>
+          <div className="grid grid-cols-2 gap-2">
+            {filePreviewUrls.map((url, index) => {
+              // Ensure the file exists before trying to access its properties
+              const file = files[index];
+              if (!file) return null;
+              return (
+                <div key={index} className="relative overflow-hidden rounded-md border border-muted">
+                  <img src={url} alt={`Selected image ${index + 1}`} className="w-full h-36 object-cover" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+                    <p className="text-xs text-white truncate">{file.name}</p>
+                    <p className="text-xs text-white/80">{Math.round(file.size / 1024)} KB</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>}
+      
+      {/* Drawing Modal */}
+      <DrawingModal open={isDrawingModalOpen} onOpenChange={setIsDrawingModalOpen} onSaveDrawing={handleSaveDrawing} />
+    </div>;
 };
 
 export default ImageUploader;

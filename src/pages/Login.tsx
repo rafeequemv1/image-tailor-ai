@@ -37,9 +37,9 @@ const Login = () => {
         </div>
       </header>
       
-      {/* Main content area - simplified to eliminate excess space */}
-      <main className="flex-grow flex items-center justify-center w-full">
-        <Card className="mx-auto w-full max-w-md shadow-lg m-4 sm:m-0">
+      {/* Main content area - full height and centered */}
+      <main className="flex-1 flex items-center justify-center w-full p-4">
+        <Card className="mx-auto w-full max-w-md shadow-lg">
           <CardHeader className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Welcome Back</h1>
             <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>

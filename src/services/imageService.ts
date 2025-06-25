@@ -1,4 +1,3 @@
-
 interface GenerateImageRequest {
   apiKey: string;
   images: File[];
